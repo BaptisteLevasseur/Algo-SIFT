@@ -8,6 +8,7 @@ import matplotlib.image as mpimg
 import scipy.signal as sig
 import time
 from keypointDetection import *
+from scaleSpace import *
 from timeDecorator import timeit
 
 
@@ -85,7 +86,7 @@ def main():
     print("Elimination des bords")
     extrema_bords=detectionBords(DoG, r, extrema_contraste)
     # #
-
+    print(np.array(extrema_bords))
     t2=time.time()
     print(t2-t1)
 

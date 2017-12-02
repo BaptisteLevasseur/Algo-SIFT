@@ -6,6 +6,7 @@ import scipy.signal
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import scipy.signal as sig
+import time
 
 
 
@@ -25,20 +26,23 @@ def gaussian_filter(n,sigma):
     return G
 
 def pyramideDeGaussiennes(image_initiale,s,nb_octave):
-    n = 10 # Taille du masque
+    n = 21 # Taille du masque
     k = 2 ** (1 / s)
+    n_pad = int((n - 1) / 2)
     sigma = 1.6 # Choix le sigma initial
     n_im, m_im = np.shape(image_initiale)
     image_octave = image_initiale[0:n_im:nb_octave, 0:m_im:nb_octave]
     n_im, m_im = np.shape(image_octave)
-    n_im += n - 1 # Je sais pas trop pourquoi, encore ces fucking indices!
-    m_im += n - 1
-    gaussienne_list = np.zeros((n_im, m_im, s + 3))
+    n_im_pad = n_im + n - 1 # Je sais pas trop pourquoi, encore ces fucking indices!
+    m_im_pad = m_im + n - 1
+    gaussienne_list=np.zeros((n_im, m_im, s + 3))
+    gaussienne_list_pad = np.zeros((n_im_pad, m_im_pad, s + 3))
     sigma_list=np.zeros(s+3)
     for j in range(0, s + 3):
         G = gaussian_filter(n, (k ** j) * sigma)
         sigma_list[j]=k ** j * sigma
-        gaussienne_list[:, :, j] = sig.convolve2d(image_octave, G)
+        gaussienne_list_pad[:, :, j] = sig.convolve2d(image_octave, G)
+    gaussienne_list = gaussienne_list_pad[n_pad:n_im_pad - n_pad, n_pad:m_im_pad - n_pad,:]
     return (gaussienne_list, sigma_list)
 
 def differenceDeGaussiennes(image_initiale,s,nb_octave):
@@ -63,7 +67,7 @@ def gradient(image):
     gradx[:,-1] = image[:, -1] - image[:, -2]
     gradx[:, 0] = image[:, 1] - image[:, 0]
 
-    grady[1:-1,:] = (image[2:n, :] - image[0:m - 2, :]) / 2
+    grady[1:-1,:] = (image[2:n, :] - image[0:n - 2, :]) / 2
     grady[-1,:] = image[-1,:] - image[-2,:]
     grady[0,:] = image[1,:] - image[0,:]
     return [grady,gradx]
@@ -87,8 +91,10 @@ def detectionExtrema(DoG):
                 # Si le maximum au centre des 24 pixels
                 maxi=np.argmax(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
                 mini=np.argmin(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
-                if mini: # or maxi (sur une image grayscale de détection de contour, les bords sont en noir => minimums)
+                if maxi or mini: # or maxi (sur une image grayscale de détection de contour, les bords sont en noir => minimums)
                     extrema_list = np.vstack((extrema_list, [y,x,s]))
+
+    print(np.size(extrema_list,0))
     return extrema_list
 
 def detectionContraste(DoG,extrema_list,seuil_contraste):
@@ -102,6 +108,7 @@ def detectionContraste(DoG,extrema_list,seuil_contraste):
             contraste[i] = False
 
     extrema_contraste_list = extrema_list[contraste]
+    print(np.size(extrema_contraste_list, 0))
     return extrema_contraste_list
 
 def detectionBords(DoG,r,extrema_list):
@@ -120,6 +127,7 @@ def detectionBords(DoG,r,extrema_list):
         if TrH ** 2 / DetH >= (r + 1) ** 2 / r:
             bord[i] = False
     extrema_bords_list = extrema_list[bord]
+    print(np.size(extrema_bords_list, 0))
     return extrema_bords_list
 
 def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
@@ -183,6 +191,7 @@ def castToGrayScale(image):
 
 # full pipeline
 def main():
+    t1=time.time()
     # filename = 'droite.jpg']
     # image = cv2.imread(filename)
     # image = image/255
@@ -198,11 +207,12 @@ def main():
     nb_octave = 1
     s=3
 
-    image = image_initiale[0:-1:nb_octave, 0:-1:nb_octave]
+    image = image_initiale[0::nb_octave, 0::nb_octave]
 
 
     # Plot la pyramide de gaussienne
 
+    print("Pyramide de Gaussiennes")
     L,sigma_list = pyramideDeGaussiennes(image, s, nb_octave)
     # f,axarr = plt.subplots(2,3)
     # axarr[0,0].imshow(L[:,:,0],cmap='gray')
@@ -213,6 +223,7 @@ def main():
     # axarr[1,2].imshow(L[:,:,5],cmap='gray')
 
     # Plot la différence de gaussienne
+    print("Différence de Gaussiennes")
     DoG, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
     # f, axarr = plt.subplots(2, 3)
     # axarr[0, 0].imshow(DoG[:, :, 0],cmap='gray')
@@ -222,52 +233,59 @@ def main():
     # axarr[1, 1].imshow(DoG[:, :, 4],cmap='gray')
     # plt.show()
 
-    
-    r=10
-    seuil_contraste=0.03
-    n, m = np.shape(image)
 
+    r=10
+    seuil_contraste=1
+    n, m = np.shape(image)
+    #
+    print("Détection d'extrema")
     extrema= detectionExtrema(DoG)
+    print("Elimination des faibles contrastes")
     extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-    extrema_bords=detectionBords(DoG, r, extrema_contraste)
+    # print("Elimination des bords")
+    # extrema_bords=detectionBords(DoG, r, extrema_contraste)
+    # #
+
+    t2=time.time()
+    print(t2-t1)
 
     y=extrema[:,0]
     x=extrema[:,1]
     y_contraste =extrema_contraste[:, 0]
     x_contraste =extrema_contraste[:, 1]
-    y_bords =extrema_bords[:, 0]
-    x_bords =extrema_bords[:, 1]
-
+    # y_bords =extrema_bords[:, 0]
+    # x_bords =extrema_bords[:, 1]
+    # #
     f, axarr = plt.subplots(1,3)
     axarr[0].imshow(DoG[:,:,1], cmap='gray')
     axarr[1].imshow(DoG[:,:,1], cmap='gray')
     axarr[2].imshow(DoG[:,:,1], cmap='gray')
     #
-    axarr[0].scatter(y,x) #Ou (y,x)?
-    axarr[1].scatter(y_contraste,x_contraste)  # Ou (y,x)?
-    axarr[2].scatter(y_bords,x_bords)  # Ou (y,x)?
-
-
-    # f, axarr = plt.subplots(3,3)
-    # axarr[0,0].imshow(image, cmap='gray')
-    # axarr[0,1].imshow(image, cmap='gray')
-    # axarr[0,2].imshow(image, cmap='gray')
-    # axarr[1, 0].imshow(image, cmap='gray')
-    # axarr[1, 1].imshow(image, cmap='gray')
-    # axarr[1, 2].imshow(image, cmap='gray')
-    # axarr[2, 0].imshow(image, cmap='gray')
-    # axarr[2, 1].imshow(image, cmap='gray')
+    axarr[0].scatter(x,y) #Ou (y,x)?
+    axarr[1].scatter(x_contraste,y_contraste)  # Ou (y,x)?
+    # axarr[2].scatter(y_bords,x_bords)  # Ou (y,x)?
     #
-    # axarr[0,0].scatter(x, y)  # Ou (y,x)?
-    # axarr[0,1].scatter(n-x, n-y)  # Ou (y,x)?
-    # axarr[0, 2].scatter(n-x, y)  # Ou (y,x)?
-    # axarr[1, 0].scatter(x, n-y)  # Ou (y,x)?
-    # axarr[1, 1].scatter(y, x)  # Ou (y,x)?
-    # axarr[1, 2].scatter(n-y, n-x)  # Ou (y,x)?
-    # axarr[2, 0].scatter(n-y, x)  # Ou (y,x)?
-    # axarr[2, 1].scatter(y, n-x)  # Ou (y,x)?
-    # print(compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste))
-    print(orientationPointsCles(L,extrema_bords))
+    #
+    # # f, axarr = plt.subplots(3,3)
+    # # axarr[0,0].imshow(image, cmap='gray')
+    # # axarr[0,1].imshow(image, cmap='gray')
+    # # axarr[0,2].imshow(image, cmap='gray')
+    # # axarr[1, 0].imshow(image, cmap='gray')
+    # # axarr[1, 1].imshow(image, cmap='gray')
+    # # axarr[1, 2].imshow(image, cmap='gray')
+    # # axarr[2, 0].imshow(image, cmap='gray')
+    # # axarr[2, 1].imshow(image, cmap='gray')
+    # #
+    # # axarr[0,0].scatter(x, y)  # Ou (y,x)?
+    # # axarr[0,1].scatter(n-x, n-y)  # Ou (y,x)?
+    # # axarr[0, 2].scatter(n-x, y)  # Ou (y,x)?
+    # # axarr[1, 0].scatter(x, n-y)  # Ou (y,x)?
+    # # axarr[1, 1].scatter(y, x)  # Ou (y,x)?
+    # # axarr[1, 2].scatter(n-y, n-x)  # Ou (y,x)?
+    # # axarr[2, 0].scatter(n-y, x)  # Ou (y,x)?
+    # # axarr[2, 1].scatter(y, n-x)  # Ou (y,x)?
+    # # print(compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste))
+    # print(orientationPointsCles(L,extrema_bords))
     plt.show()
 
 

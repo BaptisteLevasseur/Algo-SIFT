@@ -83,3 +83,13 @@ def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
     n_faible_contraste = n_extrema-np.size(extrema_contraste, 0)
     n_points_arrete=n_extrema-n_faible_contraste-np.size(extrema_bords,0)
     return n_extrema,n_faible_contraste,n_points_arrete
+
+
+#2.2 Détection des points clés
+def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
+    # Pourquoi a t'on besoin de sigma?
+    extrema = detectionExtrema(DoG)
+    extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
+    extrema_bords = detectionBords(DoG, r_courb_principale, extrema_contraste)
+    extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
+    return extrema_bords,sigma

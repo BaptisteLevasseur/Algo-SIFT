@@ -28,8 +28,8 @@ def pyramideDeGaussiennes(image_initiale,s,nb_octave):
     n = 10 # Taille du masque
     k = 2 ** (1 / s)
     sigma = 1.6 # Choix le sigma initial
-
-    image_octave = image_initiale[0:-1:nb_octave, 0:-1:nb_octave]
+    n_im, m_im = np.shape(image_initiale)
+    image_octave = image_initiale[0:n_im:nb_octave, 0:m_im:nb_octave]
     n_im, m_im = np.shape(image_octave)
     n_im += n - 1 # Je sais pas trop pourquoi, encore ces fucking indices!
     m_im += n - 1
@@ -78,24 +78,27 @@ def hessienne(image):
 def detectionExtrema(DoG):
     # Pour l'instant on se contente de regarder à l'intérieur du cube de l'octave
     # Il faudra gérer les effets au niveau des bords du cube
-    #
+    # Renvoyé pour les indices (i,j,s) = (y,x,s)
     n,m, nb_sigma= np.shape(DoG)
     extrema_list = np.empty((0, 3), int)
     for s in range(1,nb_sigma-1):
         for y in range(1,n-1):
             for x in range(1,m-1):
-                if np.argmax(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13:
+                # Si le maximum au centre des 24 pixels
+                maxi=np.argmax(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
+                mini=np.argmin(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
+                if mini: # or maxi (sur une image grayscale de détection de contour, les bords sont en noir => minimums)
                     extrema_list = np.vstack((extrema_list, [y,x,s]))
     return extrema_list
 
-def detectionContraste(DoG,extrema_list):
+def detectionContraste(DoG,extrema_list,seuil_contraste):
     # Il faudra rajouter l'interpolation (je connais pas la théorie sur les dérivées vectorielles)
     list_size = np.size(extrema_list, 0)
     contraste = np.ones(list_size, dtype=bool)
 
     for i in range(0, list_size):
-        x = extrema_list[i, :]
-        if abs(DoG[tuple(x)]) < 0.03:
+        x = extrema_list[i, :] # Vecteur x = [y,x,s]
+        if abs(DoG[tuple(x)]) < seuil_contraste:
             contraste[i] = False
 
     extrema_contraste_list = extrema_list[contraste]
@@ -105,8 +108,8 @@ def detectionBords(DoG,r,extrema_list):
     list_size = np.size(extrema_list, 0)
     bord = np.ones(list_size, dtype=bool)
 
-    x = extrema_list[:, 0]
-    y = extrema_list[:, 1]
+    y = extrema_list[:, 0]
+    x = extrema_list[:, 1]
     s = extrema_list[:, 2]
 
     for i in range(0, list_size):
@@ -119,9 +122,39 @@ def detectionBords(DoG,r,extrema_list):
     extrema_bords_list = extrema_list[bord]
     return extrema_bords_list
 
+def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
+    DoG, sigma_list = differenceDeGaussiennes(image_initiale, s, nb_octave)
+    extrema= detectionExtrema(DoG)
+    extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
+    extrema_bords=detectionBords(DoG, r, extrema_contraste)
+    n_extrema=np.size(extrema,0)
+    n_faible_contraste = n_extrema-np.size(extrema_contraste, 0)
+    n_points_arrete=n_extrema-n_faible_contraste-np.size(extrema_bords,0)
+    return n_extrema,n_faible_contraste,n_points_arrete
+
+
+def orientationPointsCles(L,extrema_list):
+    # QUESTION : Quel sigma on choisi? La borne inférieure ou la borne supérieur? (car les points clés sont repérés
+    # par rapport à la DoG et là on retourne sur L
+    nb_points=np.size(extrema_list, 0)
+    points_cles_liste = np.empty((0, 4))
+    for i in range(0,nb_points):
+        [y,x,s] = extrema_list[i, :]
+        m = np.sqrt((L[y+1,x,s]-L[y-1,x,s])**2+(L[y,x+1,s]-L[y,x-1,s])**2)
+        theta = np.arctan((L[y+1,x,s]-L[y-1,x,s])/(L[y,x+1,s]-L[y,x-1,s]))
+        points_cles_liste = np.vstack((points_cles_liste, [y, x, m,theta]))
+    return points_cles_liste
+
+
+
 #2.2 Détection des points clés
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
-    pass
+    # Pourquoi a t'on besoin de sigma?
+    extrema = detectionExtrema(DoG)
+    extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
+    extrema_bords = detectionBords(DoG, r_courb_principale, extrema_contraste)
+    extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
+    return extrema_bords,sigma
 
 
 
@@ -160,22 +193,24 @@ def main():
     # displayImage(image)
     # displayImage(image_gray, 'grayscale')
 
-    image = mpimg.imread("lena.jpg")[:, :, 1]
+    image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
 
     nb_octave = 1
     s=3
 
+    image = image_initiale[0:-1:nb_octave, 0:-1:nb_octave]
+
 
     # Plot la pyramide de gaussienne
 
-    image_conv = pyramideDeGaussiennes(image, s, nb_octave)
+    L,sigma_list = pyramideDeGaussiennes(image, s, nb_octave)
     # f,axarr = plt.subplots(2,3)
-    # axarr[0,0].imshow(image_conv[:,:,0])
-    # axarr[0,1].imshow(image_conv[:,:,1])
-    # axarr[0,2].imshow(image_conv[:,:,2])
-    # axarr[1,0].imshow(image_conv[:,:,3])
-    # axarr[1,1].imshow(image_conv[:,:,4])
-    # axarr[1,2].imshow(image_conv[:,:,5])
+    # axarr[0,0].imshow(L[:,:,0],cmap='gray')
+    # axarr[0,1].imshow(L[:,:,1],cmap='gray')
+    # axarr[0,2].imshow(L[:,:,2],cmap='gray')
+    # axarr[1,0].imshow(L[:,:,3],cmap='gray')
+    # axarr[1,1].imshow(L[:,:,4],cmap='gray')
+    # axarr[1,2].imshow(L[:,:,5],cmap='gray')
 
     # Plot la différence de gaussienne
     DoG, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
@@ -186,26 +221,53 @@ def main():
     # axarr[1, 0].imshow(DoG[:, :, 3],cmap='gray')
     # axarr[1, 1].imshow(DoG[:, :, 4],cmap='gray')
     # plt.show()
+
+    
     r=10
+    seuil_contraste=0.03
     n, m = np.shape(image)
+
     extrema= detectionExtrema(DoG)
-    extrema_contraste=detectionContraste(DoG,extrema)
+    extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
     extrema_bords=detectionBords(DoG, r, extrema_contraste)
-    x=m-extrema[:,0]
-    y=n-extrema[:,1]
-    x_contraste =m- extrema_contraste[:, 0]
-    y_contraste =n- extrema_contraste[:, 1]
-    x_bords =m- extrema_bords[:, 0]
-    y_bords =n- extrema_bords[:, 1]
+
+    y=extrema[:,0]
+    x=extrema[:,1]
+    y_contraste =extrema_contraste[:, 0]
+    x_contraste =extrema_contraste[:, 1]
+    y_bords =extrema_bords[:, 0]
+    x_bords =extrema_bords[:, 1]
 
     f, axarr = plt.subplots(1,3)
-    axarr[0].imshow(image, cmap='gray')
-    axarr[1].imshow(image, cmap='gray')
-    axarr[2].imshow(image, cmap='gray')
+    axarr[0].imshow(DoG[:,:,1], cmap='gray')
+    axarr[1].imshow(DoG[:,:,1], cmap='gray')
+    axarr[2].imshow(DoG[:,:,1], cmap='gray')
+    #
+    axarr[0].scatter(y,x) #Ou (y,x)?
+    axarr[1].scatter(y_contraste,x_contraste)  # Ou (y,x)?
+    axarr[2].scatter(y_bords,x_bords)  # Ou (y,x)?
 
-    axarr[0].scatter(x,y) #Ou (y,x)?
-    axarr[1].scatter(x_contraste, y_contraste)  # Ou (y,x)?
-    axarr[2].scatter(x_bords, y_bords)  # Ou (y,x)?
+
+    # f, axarr = plt.subplots(3,3)
+    # axarr[0,0].imshow(image, cmap='gray')
+    # axarr[0,1].imshow(image, cmap='gray')
+    # axarr[0,2].imshow(image, cmap='gray')
+    # axarr[1, 0].imshow(image, cmap='gray')
+    # axarr[1, 1].imshow(image, cmap='gray')
+    # axarr[1, 2].imshow(image, cmap='gray')
+    # axarr[2, 0].imshow(image, cmap='gray')
+    # axarr[2, 1].imshow(image, cmap='gray')
+    #
+    # axarr[0,0].scatter(x, y)  # Ou (y,x)?
+    # axarr[0,1].scatter(n-x, n-y)  # Ou (y,x)?
+    # axarr[0, 2].scatter(n-x, y)  # Ou (y,x)?
+    # axarr[1, 0].scatter(x, n-y)  # Ou (y,x)?
+    # axarr[1, 1].scatter(y, x)  # Ou (y,x)?
+    # axarr[1, 2].scatter(n-y, n-x)  # Ou (y,x)?
+    # axarr[2, 0].scatter(n-y, x)  # Ou (y,x)?
+    # axarr[2, 1].scatter(y, n-x)  # Ou (y,x)?
+    # print(compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste))
+    print(orientationPointsCles(L,extrema_bords))
     plt.show()
 
 

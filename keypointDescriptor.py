@@ -13,6 +13,7 @@ from timeDecorator import timeit
 
 
 
+
 def orientationPointsCles(L_oct,points_cles,resolution_octave):
     # QUESTION : Quel sigma on choisi? La borne inférieure ou la borne supérieur? (car les points clés sont repérés
     # par rapport à la DoG et là on retourne sur L

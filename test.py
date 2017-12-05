@@ -130,10 +130,10 @@ points_cles=np.array([[  2,  2 , 1],
  [486,426 , 3],
  [508, 20 , 3],
  [508,475 , 3]])
-nb_octave = 1
+nb_octave = 0
 s=3
 
-image = image_initiale[0::nb_octave, 0::nb_octave]
+image = image_initiale[0::nb_octave+1, 0::nb_octave+1]
 L, sigma_list = pyramideDeGaussiennes(image, s, nb_octave)
 
 
@@ -145,12 +145,16 @@ R=4 # Rayon de la zone de voisinage
 n=2*R+1
 L_grady,L_gradx=gradient(L[:,:,s])
 G=gaussian_filter(n,1.5*sigma_list[s]).flatten()
-# mat_theta=np.zeros((n, n))
-# mat_m=np.zeros((n, n))
 
+
+keypoint_list= np.empty((0, 4))
 # Calcul des matrices de d'amplitude et d'orientation pour chaque point du voisinage et conversion en vecteur
 mat_m=np.sqrt((2*L_gradx[y-R:y+R+1,x-R:x+R+1])**2+(2*L_grady[y-R:y+R+1,x-R:x+R+1])**2).flatten()
 mat_theta=np.arctan2(L_grady[y-R:y+R+1,x-R:x+R+1],L_gradx[y-R:y+R+1,x-R:x+R+1]).flatten()+np.pi
+
+
+
+
 inervalles=np.linspace(0,2*np.pi,37) # 37 éléments donc 36 intervalles
 hist=np.zeros(36)
 for i in range(0,36):
@@ -161,13 +165,14 @@ for i in range(0,36):
  # Pondération par la fenêtre gaussienne et normalisation par l'amplitude
  hist[i]=sum(G[pixels_inervalle]/mat_m[pixels_inervalle])
 
-print(hist)
 orientations_ind=np.nonzero(hist > 0.8*np.max(hist))
 orientations=inervalles[orientations_ind]+(2*np.pi/36)/2 # On prend la valeur médiane de l'intervalle (pas de 2pi/36)
-print(orientations)
+for orientation in orientations: #Peut être moyen de le faire plus court..
+ keypoint_list = np.vstack((keypoint_list, [y, x, s, orientation]))
 
+print(keypoint_list)
 
-points_cles=orientationPointsCles([L],points_cles,nb_octave-1)
+# points_cles=orientationPointsCles([L],points_cles,nb_octave-1)
 
 
 

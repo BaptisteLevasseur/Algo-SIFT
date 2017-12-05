@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import scipy.signal as sig
 import time
-from scaleSpace import *
-from keypointDetection import *
+# from scaleSpace import *
 from timeDecorator import timeit
-
+from basicOperations import *
 
 
 def orientationPointsCles(points_cles_list,L, sigma_list):
@@ -85,13 +84,13 @@ def rotationGradient(point_cle,L,n_pixel):
 
     return L_gradx_region,L_grady_region
 
-def descripteurPointCle(point_cle,L,n_pixel):
+def descripteurPointCle(point_cle,L,sigma_list,L_grady_region,L_gradx_region,n_pixel_zone,n_zone,n_bins):
     y, x, s, theta = point_cle
     s = s.astype(int)
     L = L[:, :, s]
     descripteur = np.array([y, x])
     ## Calcul de l'histogramme sur chaque sous-région (zone)
-
+    n_pixel=n_pixel_zone*n_zone
     # Filtre gaussien appliqué à la région
     G = gaussian_filter(n_pixel, 1.5 * sigma_list[s])  # Filtre gaussien
     # Matrices de magnitude et de rotation
@@ -116,7 +115,8 @@ def descripteurPointCle(point_cle,L,n_pixel):
             mat_theta_zone = mat_theta[zone_y, zone_x].flatten()
             ponderation_zone = ponderation[zone_y, zone_x].flatten()
             # Remplissage de chacun des intervalles
-            # TODO : Plafonnement des valeurs
+            # TODO : Trilinear interpolation, weight of 1-d?
+            # TODO : Normalisation pour l'illumination, Plafonnement des valeurs
             for k in range(0, n_bins):
                 bool1 = mat_theta_zone > intervalles[k]
                 bool2 = mat_theta_zone < intervalles[
@@ -127,3 +127,4 @@ def descripteurPointCle(point_cle,L,n_pixel):
                 hist[k] = sum(ponderation_zone[pixels_intervalle])
             descripteur = np.concatenate([descripteur, hist])
     return descripteur
+

@@ -80,12 +80,13 @@ def main():
     n, m = np.shape(image)
     #
     print("Détection d'extrema")
-    extrema= detectionExtrema(DoG)
+    extrema= suppressionBordsImage(detectionExtrema(DoG),m, n, 8)
     print("Elimination des faibles contrastes")
     extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
     print("Elimination des bords")
-    extrema_bords=detectionBords(DoG, r, extrema_contraste)
+    extrema_bords=detectionEdges(DoG, r, extrema_contraste)
     # #
+    print(extrema_bords)
     t2=time.time()
     print(t2-t1)
 
@@ -95,37 +96,16 @@ def main():
     x_contraste =extrema_contraste[:, 1]
     y_bords =extrema_bords[:, 0]
     x_bords =extrema_bords[:, 1]
-    # #
+    #
     f, axarr = plt.subplots(1,3)
     axarr[0].imshow(DoG[:,:,1], cmap='gray')
     axarr[1].imshow(DoG[:,:,1], cmap='gray')
     axarr[2].imshow(DoG[:,:,1], cmap='gray')
     #
-    axarr[0].scatter(x,y) #Ou (y,x)?
-    axarr[1].scatter(x_contraste,y_contraste)  # Ou (y,x)?
-    axarr[2].scatter(x_bords,y_bords)  # Ou (y,x)?
-    #
-    #
-    # # f, axarr = plt.subplots(3,3)
-    # # axarr[0,0].imshow(image, cmap='gray')
-    # # axarr[0,1].imshow(image, cmap='gray')
-    # # axarr[0,2].imshow(image, cmap='gray')
-    # # axarr[1, 0].imshow(image, cmap='gray')
-    # # axarr[1, 1].imshow(image, cmap='gray')
-    # # axarr[1, 2].imshow(image, cmap='gray')
-    # # axarr[2, 0].imshow(image, cmap='gray')
-    # # axarr[2, 1].imshow(image, cmap='gray')
-    # #
-    # # axarr[0,0].scatter(x, y)  # Ou (y,x)?
-    # # axarr[0,1].scatter(n-x, n-y)  # Ou (y,x)?
-    # # axarr[0, 2].scatter(n-x, y)  # Ou (y,x)?
-    # # axarr[1, 0].scatter(x, n-y)  # Ou (y,x)?
-    # # axarr[1, 1].scatter(y, x)  # Ou (y,x)?
-    # # axarr[1, 2].scatter(n-y, n-x)  # Ou (y,x)?
-    # # axarr[2, 0].scatter(n-y, x)  # Ou (y,x)?
-    # # axarr[2, 1].scatter(y, n-x)  # Ou (y,x)?
-    # # print(compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste))
-    # print(orientationPointsCles(L,extrema_bords))
+    axarr[0].scatter(x,y)
+    axarr[1].scatter(x_contraste,y_contraste)
+    axarr[2].scatter(x_bords,y_bords)
+
     plt.show()
 
 

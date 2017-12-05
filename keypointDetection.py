@@ -88,14 +88,15 @@ def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
 #a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans soucie
 #le descriptorSize décrit le "rayon" du descripteur (usuellement 8 ou 16 pixels)
 def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
-    l = []
+    l =  np.empty((0, 3), int)
+
     xmin = descriptorSize
     xmax = xSize - descriptorSize
     ymin = descriptorSize
     ymax = ySize - descriptorSize
     for e in extrema:
         if e[0] > xmin and e[0] < xmax and e[1] > ymin and e[1] < ymax:
-            l.append(e)
+            l = np.vstack((l, e))
     return l
 
 

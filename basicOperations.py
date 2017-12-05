@@ -16,7 +16,6 @@ def gradient(image):
     return [grady,gradx]
 
 def hessienne(image):
-    # AXES??? Pour l'instant le x est vers la droite et le y vers le bas
     Dy, Dx = gradient(image)
     Dyy, Dyx = gradient(Dy)
     Dxy, Dxx = gradient(Dx)

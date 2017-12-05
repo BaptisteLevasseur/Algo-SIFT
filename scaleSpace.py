@@ -40,7 +40,7 @@ def pyramideDeGaussiennes(image_initiale,s,no_octave):
 def differenceDeGaussiennes(image_initiale,s,nb_octave):
     DoG_all_octave = []
     for i in range(nb_octave):
-        gaussienne_list, sigma_list = pyramideDeGaussiennes(image_initiale, s, nb_octave)
+        gaussienne_list, sigma_list = pyramideDeGaussiennes(image_initiale, s, i)
         n_im, m_im, s_im = np.shape(gaussienne_list)
         DoG_list = np.zeros((n_im, m_im, s_im - 1))
         for j in range(0, s_im - 1):

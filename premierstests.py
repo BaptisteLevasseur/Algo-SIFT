@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import sys
-
+import cv2
 import scipy.signal
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -45,7 +45,7 @@ def main():
     image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
     image_initiale=image_initiale/255
 
-    nb_octave = 2
+    nb_octave = 1
     s=3
 
     image = image_initiale[0::nb_octave, 0::nb_octave]
@@ -81,22 +81,11 @@ def main():
     #
     print("Détection d'extrema")
     extrema= detectionExtrema(DoG)
-    print(len(extrema))
     print("Elimination des faibles contrastes")
     extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-    print(len(extrema_contraste))
-    print("Elimination des points sur les edges")
-    extrema_bords=detectionEdges(DoG, r, extrema_contraste)
-    print(len(extrema_contraste))
-    print("Elimination des points sur les bords")
-    xSize = np.shape(DoG[0])[0]
-    ySize = np.shape(DoG[0])[1]
-    descriptorSize = 8
-    extrema_bords_2 = suppressionBordsImage(extrema,xSize,ySize,descriptorSize)
-    print(len(extrema_bords_2))
+    print("Elimination des bords")
+    extrema_bords=detectionBords(DoG, r, extrema_contraste)
     # #
-    print(np.array(extrema_bords))
-    print(np.array(extrema_bords_2))
     t2=time.time()
     print(t2-t1)
 
@@ -138,6 +127,7 @@ def main():
     # # print(compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste))
     # print(orientationPointsCles(L,extrema_bords))
     plt.show()
+
 
 
 if __name__ == "__main__":

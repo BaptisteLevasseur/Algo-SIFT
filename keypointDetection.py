@@ -55,7 +55,7 @@ def detectionContraste(DoG,extrema_list,seuil_contraste):
     print(np.size(extrema_contraste_list, 0))
     return extrema_contraste_list
 
-def detectionBords(DoG,r,extrema_list):
+def detectionEdges(DoG,r,extrema_list):
     list_size = np.size(extrema_list, 0)
     bord = np.ones(list_size, dtype=bool)
 
@@ -85,11 +85,25 @@ def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
     return n_extrema,n_faible_contraste,n_points_arrete
 
 
+#a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans soucie
+#le descriptorSize décrit le "rayon" du descripteur (usuellement 8 ou 16 pixels)
+def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
+    l = []
+    xmin = descriptorSize
+    xmax = xSize - descriptorSize
+    ymin = descriptorSize
+    ymax = ySize - descriptorSize
+    for e in extrema:
+        if e[0] > xmin and e[0] < xmax and e[1] > ymin and e[1] < ymax:
+            l.append(e)
+    return l
+
+
 #2.2 Détection des points clés
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
-    # Pourquoi a t'on besoin de sigma?
+    # Pourquoi a t-on besoin de sigma? Bonne question
     extrema = detectionExtrema(DoG)
     extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
-    extrema_bords = detectionBords(DoG, r_courb_principale, extrema_contraste)
+    extrema_bords = detectionEdges(DoG, r_courb_principale, extrema_contraste)
     extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
     return extrema_bords,sigma

@@ -47,31 +47,64 @@ def display_circle_on_points(points1, points2,  image1, image2):
     plt.show()
 
 
+def get_final_pic_dimensions(h, image1, image2):
+    xmax, ymax = image2.shape[0:2]
+    #faut il inverser ici ?
+    hinv = np.linalg.inv(h)
+    final_image_size = np.dot(hinv,np.array([xmax, ymax, 1]))
+    xfinal, yfinal = final_image_size[0:2]
+    xfinal = np.max([xfinal, image1.shape[0]])
+    yfinal = np.max([yfinal, image1.shape[1]])
+    return int(xfinal), int(yfinal)
+
+#attention : ici on bosser avec des images couleur
+def reconstruct_image(h, image1, image2):
+    x1 = image1.shape[0]
+    y1 = image1.shape[1]
+    x2 = image2.shape[1]
+    y2 = image2.shape[1]
+
+    xmax, ymax = get_final_pic_dimensions(h, image1, image2)
+    res = np.zeros((xmax, ymax, 3))
+    hinv = np.linalg.inv(h)
+    for i in range(0,xmax):
+        for j in range(0, ymax):
+            i_init, j_init = np.array(np.dot(h, [i, j, 1])[0:2], dtype='int')
+            if i_init >= x2 or i_init < 0 or j_init >= y2 or j_init < 0:
+                res[i, j, :] = np.array([0, 0, 0])
+            else:
+                res[i, j, 0] = image2[i_init, j_init]
+                res[i, j, 1] = image2[i_init, j_init]
+                res[i, j, 2] = image2[i_init, j_init]
+    res[:x1, :y1, 0] = image1[:, :]
+    res[:x1, :y1, 1] = image1[:, :]
+    res[:x1, :y1, 2] = image1[:, :]
+    return res
 
 
-
-
-
-
-
+def castToGrayScale(image):
+    image_gray = np.zeros(image.shape[0:2])
+    image_gray[:] = 0.2989 * image[:, :, 0] + 0.5870 * image[:, :, 1] + 0.1140 * image[:, :, 2]
+    return image_gray
 
 
 
 
 
 if __name__ == '__main__':
-    a = np.array([[100, 120, 1, 2], [500, 500, 3, 4], [300, 420, 10, 10], [400, 100, 100, 100], [500, 220, 8, 9]])
-    b = np.array([[100, 100, 1, 2], [300, 400, 4, 3], [300, 400, 9, 10], [100, 300, 200, 0], [500, 200, 7, 9]])
+    a = np.array([[100, 120, 1, 2], [300, 180, 3, 4], [300, 420, 10, 10], [400, 100, 100, 100], [500, 220, 8, 9]])
+    b = np.array([[100, 100, 1, 2], [300, 160, 3, 3.9], [300, 400, 9, 10], [100, 300, 200, 0], [500, 200, 7, 9]])
 
 
-    image_initiale1 = mpimg.imread("lena.jpg")[:, :, 1]
+    image_initiale1 = mpimg.imread("gauche.jpg")[:, :, 1]
 
-    image_initiale2 = mpimg.imread("lena.jpg")[:, :, 1]
+    image_initiale2 = mpimg.imread("droite.jpg")[:, :, 1]
     image_initiale1 = image_initiale1 / 255
     image_initiale2 = image_initiale2 / 255
-
+    #image_initiale1 = castToGrayScale(image_initiale1)
+    #image_initiale2 = castToGrayScale(image_initiale2)
     c = distanceInterPoints(a,b)
-    d = get_n_nearest_points(c,3)
+    d = get_n_nearest_points(c,4)
     print(d)
     p1,p2 = get_nearest_descriptors_couples(d,a,b)
     display_circle_on_points(p1,p2,image_initiale1,image_initiale2)
@@ -108,6 +141,12 @@ if __name__ == '__main__':
     print(np.dot(HpasSvd, x11))
     print(np.dot(HpasSvd, x22))
     print(np.dot(HpasSvd, x33))
+
+    r = reconstruct_image(Hsvd,image_initiale1,image_initiale2)
+    fig, ax = plt.subplots()
+    ax.imshow(r, cmap='gray')
+    plt.show()
+    pass
 
 
 

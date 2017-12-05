@@ -32,23 +32,13 @@ def castToGrayScale(image):
 # full pipeline
 def main():
     t1=time.time()
-    # filename = 'droite.jpg']
-    # image = cv2.imread(filename)
-    # image = image/255
-    # print("size of loaded picture: " + str(image.shape))
-    # #grayscale conversion :
-    # image_gray = castToGrayScale(image)
-
-    # displayImage(image)
-    # displayImage(image_gray, 'grayscale')
-
     image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
     image_initiale=image_initiale/255
 
-    nb_octave = 1
-    s=3
+    nb_octave = 0
+    s=1
 
-    image = image_initiale[0::nb_octave, 0::nb_octave]
+    image = image_initiale[0::nb_octave+1, 0::nb_octave+1]
 
 
     # Plot la pyramide de gaussienne

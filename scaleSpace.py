@@ -1,18 +1,7 @@
 import numpy as np
 import scipy.signal as sig
+from basicOperations import *
 
-
-def gaussian_filter(n,sigma):
-    if sigma == 0:
-        G = np.zeros((n, n))
-        centre = int((n-1)/2)
-        G[centre, centre] = 1
-    else:
-        x = np.linspace(-(n - 1) / 2, (n - 1) / 2, n)
-        xv, yv = np.meshgrid(x, x)
-        G = 1 / (2 * np.pi * sigma ** 2) * np.exp(-(xv ** 2 + yv ** 2) / (2 * sigma ** 2))
-        G = G / sum(sum(G))
-    return G
 
 
 #attention : les octaves sont numérotées à partir de zéro

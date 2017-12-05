@@ -124,79 +124,19 @@ L_list, sigma_list = pyramideDeGaussiennes(image, s, nb_octave)
 
 points_cles_orientes_list=orientationPointsCles(points_cles_list,L_list, sigma_list)
 
-
-i=10
-# rotationGradient(L_list,points_cles_orientes_list[i],16)
-y,x,s,theta=points_cles_orientes_list[i]
-s=s.astype(int)
-L=L_list[:,:,s]
 n_zone=4 #Donc 4x4 zones
 n_pixel_zone=4 #Donc 4x4 pixel par zone
 n_bins = 8
-n_pixel=n_zone*n_pixel_zone #
 
-
-descripteur=np.array([y,x])
 descripteurs_list=np.empty((0, n_zone**2*n_bins+2))
-
-# Rotation des gradients par rapport au point x,y dans la région de n_pixel
-L_grady, L_gradx = gradient(L)
-# Gradients avec rotations
-L_gradx_region=np.zeros((n_pixel, n_pixel))
-L_grady_region=np.zeros((n_pixel, n_pixel))
-for i in range(0,n_pixel):
- for j in range(0,n_pixel):
-  i_ref=(i-n_pixel/2-1) # coordonnée i recentrée
-  j_ref=(j-n_pixel/2-1) # coordonnée j recentrée
-  # Matrice de rotation
-  mat_rot=np.array([[np.cos(theta), -np.sin(theta)],[np.sin(theta), np.cos(theta)]])
-  # Coordonnées des points de la rotation
-  i_rot,j_rot=np.dot(mat_rot,np.array([i_ref,j_ref]))
-  y_rot,x_rot=np.floor(np.array([i_rot,j_rot])+np.array([y,x])).astype(int)
-  # Enregistrement des régions de rotation
-  L_gradx_region[i,j]=L_gradx[y_rot,x_rot]
-  L_grady_region[i, j] = L_grady[y_rot, x_rot]
-
-## Calcul de l'histogramme sur chaque sous-région (zone)
-
-# Filtre gaussien appliqué à la région
-G = gaussian_filter(n_pixel, 1.5 * sigma_list[s]) # Filtre gaussien
-# Matrices de magnitude et de rotation
-mat_m = np.sqrt(2 * L_gradx_region ** 2 + (2 * L_grady_region) ** 2)
-mat_theta = np.arctan2(L_grady_region,L_gradx_region) + np.pi
-
-# Pondération de chaque pixel (double pondération)
-ponderation=G/mat_m # Pondération de chaque pixel
-
-# Compteur de chaque zone (row major order)
-zone_count = 0
-# Application de l'histogramme
-
-for i in range(0, n_zone):
- for j in range(0, n_zone):
-  #Définition des intervalles pour l'histogramme
-  intervalles = np.linspace(0, 2 * np.pi, n_bins + 1)
-  hist = np.zeros(n_bins)
-  # Limites de la zone
-  zone_y=slice(n_pixel_zone*i,n_pixel_zone*(i+1))
-  zone_x=slice(n_pixel_zone*j,n_pixel_zone*(j+1))
-  mat_theta_zone=mat_theta[zone_y,zone_x].flatten()
-  ponderation_zone=ponderation[zone_y,zone_x].flatten()
-  # Remplissage de chacun des intervalles
-  # TODO : Plafonnement des valeurs
-  for k in range(0, n_bins):
-   bool1 = mat_theta_zone > intervalles[k]
-   bool2 = mat_theta_zone < intervalles[k + 1]  # Obligé de créer des variables, triste langage de programmation..
-   # Numéros des pixels situés dans l'intervalle en question
-   pixels_intervalle = np.nonzero(bool1 & bool2)
-   # Pondération par la fenêtre gaussienne et normalisation par l'amplitude
-   hist[k] = sum(ponderation_zone[pixels_intervalle])
-  descripteur=np.concatenate([descripteur, hist])
-
-descripteurs_list=np.vstack((descripteurs_list,descripteur))
+for i in range(0,np.size(points_cles_orientes_list,0)):
+    point_cle=points_cles_orientes_list[i]
+    L_grady_region,L_gradx_region=rotationGradient(point_cle,L_list,16)
+    descripteur=descripteurPointCle(point_cle,L_list,sigma_list,L_grady_region,L_gradx_region,n_pixel_zone,n_zone,n_bins)
+    descripteurs_list=np.vstack((descripteurs_list,descripteur))
 
 
-
+np.savetxt('test1.txt', descripteurs_list)
 
 #
 # plt.imshow(descripteur_region_gradx,cmap='gray')

@@ -1,26 +1,6 @@
 import numpy as np
+from basicOperations import *
 
-
-def gradient(image):
-    n,m = np.shape(image)
-    gradx=np.zeros((n,m))
-    grady = np.zeros((n, m))
-
-    gradx[:,1:-1] = (image[:,2:m]-image[:,0:m-2])/2
-    gradx[:,-1] = image[:, -1] - image[:, -2]
-    gradx[:, 0] = image[:, 1] - image[:, 0]
-
-    grady[1:-1,:] = (image[2:n, :] - image[0:n - 2, :]) / 2
-    grady[-1,:] = image[-1,:] - image[-2,:]
-    grady[0,:] = image[1,:] - image[0,:]
-    return [grady,gradx]
-
-def hessienne(image):
-    # AXES??? Pour l'instant le x est vers la droite et le y vers le bas
-    Dy, Dx = gradient(image)
-    Dyy, Dyx = gradient(Dy)
-    Dxy, Dxx = gradient(Dx)
-    return [[Dxx,Dxy],[Dyx,Dyy]]
 
 def detectionExtrema(DoG):
     # Pour l'instant on se contente de regarder à l'intérieur du cube de l'octave

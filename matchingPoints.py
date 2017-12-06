@@ -52,7 +52,7 @@ def get_final_pic_dimensions(h, image1, image2):
     xmax, ymax = image2.shape[0:2]
     #faut il inverser ici ?
     hinv = np.linalg.inv(h)
-    final_image_size = np.dot(hinv,np.array([xmax, ymax, 1]))
+    final_image_size = np.dot(h,np.array([xmax, ymax, 1]))
     xfinal, yfinal = final_image_size[0:2]
     xfinal = np.max([xfinal, image1.shape[0]])
     yfinal = np.max([yfinal, image1.shape[1]])
@@ -62,15 +62,15 @@ def get_final_pic_dimensions(h, image1, image2):
 def reconstruct_image(h, image1, image2):
     x1 = image1.shape[0]
     y1 = image1.shape[1]
-    x2 = image2.shape[1]
+    x2 = image2.shape[0]
     y2 = image2.shape[1]
     hinv = np.linalg.inv(h)
     xmax, ymax = get_final_pic_dimensions(hinv, image1, image2)
-    res = np.zeros((xmax, ymax, 3))
+    res = np.zeros((xmax+1, ymax+1, 3))
     res[:x1, :y1, 0] = image1[:, :]
     for i in range(0, xmax):
         for j in range(0, ymax):
-            i_init, j_init = np.array(np.dot(hinv, [i, j, 1])[0:2], dtype='int')
+            i_init, j_init = np.array(np.dot(h, [i, j, 1])[0:2], dtype='int')
             if i_init >= x2 or i_init < 0 or j_init >= y2 or j_init < 0:
                 pass
             else:
@@ -120,9 +120,9 @@ def final_pipeline(desc1, desc2, image1, image2):
 
     p1_unpurged, p2_unpurged = get_nearest_descriptors_couples(d, a, b)
     p1, p2 = check_for_superposed_descriptors(p1_unpurged, p2_unpurged)
-    display_circle_on_points(p1[:4, :], p2[:4, :], image_initiale1, image_initiale2)
+    display_circle_on_points(p1[:5, :], p2[:5, :], image_initiale1, image_initiale2)
 
-    A = constructionA(p1[:4, :], p2[:4, :])
+    A = constructionA(p1[:5, :], p2[:5, :])
     Hsvd = get_H_by_SVD(A)
     HpasSvd = get_H_by_quad(A)
 

@@ -92,18 +92,25 @@ def getDescriptors(image_name):
 
 
 if __name__ == "__main__":
-    image1 = "Redgauche.jpg"
-    image2 = "Reddroite.jpg"
+    image1 = "gauche.jpg"
+    image2 = "droite.jpg"
 
     # à utiliser si on a déjà les descripteurs
-    loadDesc = True
+    loadDesc = False
 
     d1 = None
     d2 = None
     if loadDesc:
         print("Loading descriptors...")
-        d1 = np.loadtxt('desc_'+image1+'.txt')
-        d2 = np.loadtxt('desc_'+image2+'.txt')
+        try:
+            d1 = np.loadtxt('desc_'+image1+'.txt')
+            d2 = np.loadtxt('desc_'+image2+'.txt')
+        except FileNotFoundError:
+            print("Files not found. Calculating descriptors...")
+            d1 = getDescriptors(image1)
+            d2 = getDescriptors(image2)
+            np.savetxt('desc_' + image1 + '.txt', d1)
+            np.savetxt('desc_' + image2 + '.txt', d2)
     else:
         d1 = getDescriptors(image1)
         d2 = getDescriptors(image2)

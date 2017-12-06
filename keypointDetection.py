@@ -25,10 +25,12 @@ def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
     # Il faudra rajouter l'interpolation (je connais pas la théorie sur les dérivées vectorielles)
     list_size = np.size(extrema_list, 0)
     contraste = np.ones(list_size, dtype=bool)
-    n=np.size(DoG,2)
 
     for i in range(0, list_size):
         x = extrema_list[i, :] # Vecteur x = y,x,s
+
+        ########################
+        #TODO : Valeurs des offsets trop élevé
 
         #Calcul des dérivées premières et secondaires au point X
         grady, gradx, grads = D_grad
@@ -39,17 +41,27 @@ def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
            [Dsy[tuple(x)],Dsx[tuple(x)],Dss[tuple(x)]]
 
         # Calcul de l'offset estimé
+        # Limite à revoir, le déterminant trop faible donne des trop grandes valeurs d'offset
         if np.linalg.det(D2) > 10**(-10):
-            x_est=-np.dot(np.linalg.inv(D2),D1)
+            y_e,x_e,s_e=-np.dot(np.linalg.inv(D2),D1)
+            if abs(y_e)>0.5:
+                y_e=np.sign(y_e)*(1-y_e)
+                x[0]+=np.sign(y_e)
+            if abs(x_e)>0.5:
+                x_e=np.sign(x_e)*(1-x_e)
+                x[1]+=np.sign(x_e)
+            if abs(s_e)>0.5:
+                s_e=np.sign(s_e)*(1-s_e)
+                x[2] += np.sign(s_e)
+            x_est=[y_e,x_e,s_e]
         else:
             x_est=[0, 0, 0]
-        print(x_est)
         # Contraste interpolé
         D=DoG[tuple(x)]+1/2*np.dot(np.transpose(D1),x_est)
-        print(D)
+        ########################
 
 
-        # offset from Taylor
+        #Remplacer DoG[tuple(x)] par D si ça marche
         if abs(DoG[tuple(x)]) < seuil_contraste:
             contraste[i] = False
 

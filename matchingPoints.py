@@ -38,8 +38,8 @@ def display_circle_on_points(points1, points2,  image1, image2):
 
     c = ('b', 'r', 'g', 'y')
     for i in range(points1.shape[0]):
-        circle1 = plt.Circle((points1[i, 0], points1[i, 1]), 10, color=c[i % 4], fill=False)
-        circle2 = plt.Circle((points2[i, 0], points2[i, 1]), 10, color=c[i % 4], fill=False)
+        circle1 = plt.Circle((points1[i, 1], points1[i, 0]), 10, color=c[i % 4], fill=False)
+        circle2 = plt.Circle((points2[i, 1], points2[i, 0]), 10, color=c[i % 4], fill=False)
 
         ax[0].add_artist(circle1)
         ax[1].add_artist(circle2)
@@ -64,22 +64,22 @@ def reconstruct_image(h, image1, image2):
     y1 = image1.shape[1]
     x2 = image2.shape[1]
     y2 = image2.shape[1]
-
-    xmax, ymax = get_final_pic_dimensions(h, image1, image2)
-    res = np.zeros((xmax, ymax, 3))
     hinv = np.linalg.inv(h)
+    xmax, ymax = get_final_pic_dimensions(hinv, image1, image2)
+    res = np.zeros((xmax, ymax, 3))
     res[:x1, :y1, 0] = image1[:, :]
     res[:x1, :y1, 1] = image1[:, :]
     res[:x1, :y1, 2] = image1[:, :]
-    for i in range(0,xmax):
+    for i in range(0, xmax):
         for j in range(0, ymax):
-            i_init, j_init = np.array(np.dot(h, [i, j, 1])[0:2], dtype='int')
+            i_init, j_init = np.array(np.dot(hinv, [i, j, 1])[0:2], dtype='int')
             if i_init >= x2 or i_init < 0 or j_init >= y2 or j_init < 0:
-                res[i, j, :] = np.array([0, 0, 0])
+                pass
             else:
                 res[i, j, 0] = image2[i_init, j_init]
                 res[i, j, 1] = image2[i_init, j_init]
                 res[i, j, 2] = image2[i_init, j_init]
+
 
     return res
 
@@ -88,6 +88,22 @@ def castToGrayScale(image):
     image_gray = np.zeros(image.shape[0:2])
     image_gray[:] = 0.2989 * image[:, :, 0] + 0.5870 * image[:, :, 1] + 0.1140 * image[:, :, 2]
     return image_gray
+
+def check_for_superposed_descriptors(desc1, desc2):
+
+    for i in range(desc1.shape[0]-1):
+        if i >= desc1.shape[0]:
+            break
+        d1 = desc1[i]
+        for j in range(i+1, desc1.shape[0]):
+            if j >= desc1.shape[0]:
+                break
+            d2 = desc1[j]
+            distance = np.sqrt((d1[0] - d2[0])**2 + (d1[1] - d2[1])**2)
+            if distance < 2:
+                desc1, desc2 = check_for_superposed_descriptors(np.delete(desc1, j, 0), np.delete(desc2, j, 0))
+
+    return desc1, desc2
 
 
 def final_pipeline(desc1, desc2, image1, image2):
@@ -98,25 +114,29 @@ def final_pipeline(desc1, desc2, image1, image2):
     image_initiale2 = mpimg.imread(image2)[:, :, 1]
     image_initiale1 = image_initiale1 / 255
     image_initiale2 = image_initiale2 / 255
-    # image_initiale1 = castToGrayScale(image_initiale1)
-    # image_initiale2 = castToGrayScale(image_initiale2)
     c = distanceInterPoints(a, b)
-    d = get_n_nearest_points(c, 4)
+    nb_plus_proche_voisins = 20
+    d = get_n_nearest_points(c, nb_plus_proche_voisins)
     print(d)
-    p1, p2 = get_nearest_descriptors_couples(d, a, b)
-    display_circle_on_points(p1, p2, image_initiale1, image_initiale2)
+    #on check si certains descripteurs sont superposés; auquel cas on prend les suivants
+    #pour avoir un système inversible
 
-    A = constructionA(p1, p2)
+    p1_unpurged, p2_unpurged = get_nearest_descriptors_couples(d, a, b)
+    p1, p2 = check_for_superposed_descriptors(p1_unpurged, p2_unpurged)
+    display_circle_on_points(p1[:4, :], p2[:4, :], image_initiale1, image_initiale2)
+
+    A = constructionA(p1[:4, :], p2[:4, :])
     Hsvd = get_H_by_SVD(A)
     HpasSvd = get_H_by_quad(A)
 
-    print(np.dot(A, np.reshape(Hsvd, (9, 1))))
-
-    print(np.dot(A, np.reshape(HpasSvd, (9, 1))))
+    print("Vérifications : norme 2 de A*h par les deux méthodes")
+    print(np.linalg.norm(np.dot(A, np.reshape(Hsvd, (9, 1)))))
+    print(np.linalg.norm(np.dot(A, np.reshape(HpasSvd, (9, 1)))))
 
     print(Hsvd)
     print(HpasSvd)
-    print(Hsvd - HpasSvd)
+    print("Norme de la différence des deux H")
+    print(np.linalg.norm(Hsvd - HpasSvd))
 
 
 

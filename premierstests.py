@@ -96,19 +96,18 @@ if __name__ == "__main__":
     image2 = "Reddroite.jpg"
 
     # à utiliser si on a déjà les descripteurs
-    loadDesc = False
-
-
+    loadDesc = True
 
     d1 = None
     d2 = None
     if loadDesc:
-        d1 = np.loadtxt('d1.txt')
-        d2 = np.loadtxt('d2.txt')
+        print("Loading descriptors...")
+        d1 = np.loadtxt('desc_'+image1+'.txt')
+        d2 = np.loadtxt('desc_'+image2+'.txt')
     else:
         d1 = getDescriptors(image1)
         d2 = getDescriptors(image2)
         np.savetxt('desc_' + image1 + '.txt', d1)
         np.savetxt('desc_' + image2 + '.txt', d2)
-
+    print('Entering final pipeline')
     matchingPoints.final_pipeline(d1,d2,image1,image2)

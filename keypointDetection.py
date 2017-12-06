@@ -87,4 +87,4 @@ def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolut
     extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
     extrema_bords = detectionEdges(DoG, r_courb_principale, extrema_contraste)
     extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
-    return extrema_bords,sigma
+    return extrema_bords

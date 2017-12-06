@@ -21,13 +21,35 @@ def detectionExtrema(DoG):
     print(np.size(extrema_list,0))
     return extrema_list
 
-def detectionContraste(DoG,extrema_list,seuil_contraste):
+def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
     # Il faudra rajouter l'interpolation (je connais pas la théorie sur les dérivées vectorielles)
     list_size = np.size(extrema_list, 0)
     contraste = np.ones(list_size, dtype=bool)
+    n=np.size(DoG,2)
 
     for i in range(0, list_size):
-        x = extrema_list[i, :] # Vecteur x = [y,x,s]
+        x = extrema_list[i, :] # Vecteur x = y,x,s
+
+        #Calcul des dérivées premières et secondaires au point X
+        grady, gradx, grads = D_grad
+        D1 = [grady[tuple(x)],gradx[tuple(x)],grads[tuple(x)]]
+        [Dyy, Dyx, Dys], [Dxy, Dxx, Dxs], [Dsy, Dsx, Dss] = D_H
+        D2=[Dyy[tuple(x)],Dyx[tuple(x)],Dys[tuple(x)]],\
+           [Dxy[tuple(x)],Dxx[tuple(x)],Dxs[tuple(x)]],\
+           [Dsy[tuple(x)],Dsx[tuple(x)],Dss[tuple(x)]]
+
+        # Calcul de l'offset estimé
+        if np.linalg.det(D2) > 10**(-10):
+            x_est=-np.dot(np.linalg.inv(D2),D1)
+        else:
+            x_est=[0, 0, 0]
+        print(x_est)
+        # Contraste interpolé
+        D=DoG[tuple(x)]+1/2*np.dot(np.transpose(D1),x_est)
+        print(D)
+
+
+        # offset from Taylor
         if abs(DoG[tuple(x)]) < seuil_contraste:
             contraste[i] = False
 
@@ -84,12 +106,18 @@ def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
 #on note qu'on utilise pas sigma
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
     # Pourquoi a t-on besoin de sigma? Bonne question
+
+    D_grad=gradient(DoG)
+    D_H = hessienne(DoG)
+
     extrema = detectionExtrema(DoG)
-    extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
-    extrema_bords = detectionEdges(DoG, r_courb_principale, extrema_contraste)
-    xsize,ysize = DoG.shape[0:2]
-    #pour avoir des valeurs valides après rotation (dans la partie descripteur),
-    #on enlève les points à 8*sqrt(2) du bord, soit à moins de 12
-    extrema_bords_final = suppressionBordsImage(extrema_bords, xsize,ysize, 12)
+    xsize, ysize = DoG.shape[0:2]
+    # pour avoir des valeurs valides après rotation (dans la partie descripteur),
+    # on enlève les points à 8*sqrt(2) du bord, soit à moins de 12
+    extrema_bords = suppressionBordsImage(extrema, xsize, ysize, 12)
+
+    extrema_contraste = detectionContraste(DoG, extrema_bords,seuil_contraste,D_grad,D_H)
+    extrema_edges = detectionEdges(DoG, r_courb_principale, extrema_contraste)
+
     #extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
-    return extrema_bords_final
+    return extrema_edges

@@ -84,9 +84,11 @@ def getDescriptors(image_name):
     final_descriptor_list = np.empty((0, n_zone ** 2 * n_bins + 2))
 
     for octave in range(nb_octave):
+        print("Octave  ", octave,":")
         L_list, sigma_list = pyramideDeGaussiennes(image, s, octave)
+        print("Orientation point cle")
         points_cles_orientes_list = orientationPointsCles(extrema_final_list[octave], L_list, sigma_list)
-
+        print("Calcul des descripteurs")
         descripteurs_list = np.empty((0, n_zone ** 2 * n_bins + 2))
         for i in range(0, np.size(points_cles_orientes_list, 0)):
             point_cle = points_cles_orientes_list[i]
@@ -103,9 +105,17 @@ def getDescriptors(image_name):
 
 
 if __name__ == "__main__":
-    image1 = "gaucheReduit.jpg"
-    image2 = "droiteReduit.jpg"
-    d1 = getDescriptors(image1)
-    d2 = getDescriptors(image2)
+    image1 = "gauche2.jpg"
+    image2 = "droite2.jpg"
+    lena = "lena.jpg"
 
-    matchingPoints.final_pipeline(d1,d2,image1,image2)
+
+    d1 = getDescriptors(lena)
+    # d2 = getDescriptors(image2)
+    # np.savetxt('d1.txt', d1)
+    # np.savetxt('d2.txt', d2)
+
+    # d1=np.loadtxt('d1.txt')
+    # d2 = np.loadtxt('d2.txt')
+
+    # matchingPoints.final_pipeline(d1,d2,image1,image2)

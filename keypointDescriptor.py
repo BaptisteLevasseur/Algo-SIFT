@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import sys
-import cv2
 import scipy.signal
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg

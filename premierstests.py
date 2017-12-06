@@ -9,7 +9,7 @@ import time
 from keypointDetection import *
 from scaleSpace import *
 from timeDecorator import timeit
-
+from keypointDescriptor import *
 
 
 
@@ -67,6 +67,8 @@ def main():
     seuil_contraste=0.03
     n, m = np.shape(image)
 
+    extrema_final_list = []
+
     for DoG in DoG_list:
         t = time.time()
         print("Détection d'extrema et ")
@@ -76,12 +78,29 @@ def main():
         extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
         print("Elimination des arêtes")
         extrema_bords=detectionEdges(DoG, r, extrema_contraste)
+        extrema_final_list.append(extrema_bords)
         t2 = time.time() - t
         print("{0:.2f} secondes".format(t2))
 
+    n_zone = 4  # Donc 4x4 zones
+    n_pixel_zone = 4  # Donc 4x4 pixel par zone
+    n_bins = 8
 
+    final_descriptor_list = []
 
+    for octave in range(nb_octave):
+        L_list, sigma_list = pyramideDeGaussiennes(image, s, octave)
+        points_cles_orientes_list = orientationPointsCles(extrema_final_list[octave], L_list, sigma_list)
 
+        descripteurs_list = np.empty((0, n_zone ** 2 * n_bins + 2))
+        for i in range(0, np.size(points_cles_orientes_list, 0)):
+            point_cle = points_cles_orientes_list[i]
+            L_grady_region, L_gradx_region = rotationGradient(point_cle, L_list, 16)
+            descripteur = descripteurPointCle(point_cle, L_list, sigma_list, L_grady_region, L_gradx_region, n_pixel_zone,
+                                          n_zone, n_bins)
+            descripteurs_list = np.vstack((descripteurs_list, descripteur))
+            final_descriptor_list.append(descripteurs_list)
+    pass
 
 if __name__ == "__main__":
     main()

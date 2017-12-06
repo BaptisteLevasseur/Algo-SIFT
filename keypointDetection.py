@@ -87,7 +87,9 @@ def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolut
     extrema = detectionExtrema(DoG)
     extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
     extrema_bords = detectionEdges(DoG, r_courb_principale, extrema_contraste)
-    xsize,ysize = DoG[resolution_octave].shape[0:2]
-    extrema_bords_final = suppressionBordsImage(extrema_bords, xsize,ysize, 8)
-    extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
-    return extrema_bords
+    xsize,ysize = DoG.shape[0:2]
+    #pour avoir des valeurs valides après rotation (dans la partie descripteur),
+    #on enlève les points à 8*sqrt(2) du bord, soit à moins de 12
+    extrema_bords_final = suppressionBordsImage(extrema_bords, xsize,ysize, 12)
+    #extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
+    return extrema_bords_final

@@ -13,14 +13,6 @@ from keypointDescriptor import *
 import matchingPoints
 
 
-#permet d'afficher une image; l'image se fermera en appuyant sur une touche du clavier
-def displayImage(image, title = 'image'):
-    ratio = image.shape[1]/image.shape[0]
-    cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('image', int(800*ratio), 800 )
-    cv2.imshow("image", image)
-    cv2.waitKey(0)
-
 
 def castToGrayScale(image):
     image_gray = np.zeros(image.shape[0:2])
@@ -96,13 +88,12 @@ def getDescriptors(image_name):
             descripteur[0:2] = descripteur[0:2]*(2**octave)
             descripteurs_list = np.vstack((descripteurs_list, descripteur))
         final_descriptor_list = np.vstack((final_descriptor_list, descripteurs_list))
-    pass
-
+    return final_descriptor_list
 
 
 if __name__ == "__main__":
-    image1 = "gaucheReduit.jpg"
-    image2 = "droiteReduit.jpg"
+    image1 = "Redgauche.jpg"
+    image2 = "Reddroite.jpg"
     d1 = getDescriptors(image1)
     d2 = getDescriptors(image2)
 

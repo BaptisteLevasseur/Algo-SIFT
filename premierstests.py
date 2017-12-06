@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import sys
-import cv2
 import scipy.signal
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -33,18 +32,17 @@ def castToGrayScale(image):
 def main():
     t1=time.time()
     image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
-    image_initiale=image_initiale/255
+    image=image_initiale/255
 
-    nb_octave = 0
-    s=1
+    nb_octave = 4
+    s=3
 
-    image = image_initiale[0::nb_octave+1, 0::nb_octave+1]
 
 
     # Plot la pyramide de gaussienne
 
     print("Pyramide de Gaussiennes")
-    L,sigma_list = pyramideDeGaussiennes(image, s, nb_octave)
+    L,sigma_list = pyramideDeGaussiennes(image, s, 0)
     # f,axarr = plt.subplots(2,3)
     # axarr[0,0].imshow(L[:,:,0],cmap='gray')
     # axarr[0,1].imshow(L[:,:,1],cmap='gray')
@@ -55,7 +53,7 @@ def main():
 
     # Plot la différence de gaussienne
     print("Différence de Gaussiennes")
-    DoG, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
+    DoG_list, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
     # f, axarr = plt.subplots(2, 3)
     # axarr[0, 0].imshow(DoG[:, :, 0],cmap='gray')
     # axarr[0, 1].imshow(DoG[:, :, 1],cmap='gray')
@@ -68,35 +66,20 @@ def main():
     r=10
     seuil_contraste=0.03
     n, m = np.shape(image)
-    #
-    print("Détection d'extrema")
-    extrema= suppressionBordsImage(detectionExtrema(DoG),m, n, 8)
-    print("Elimination des faibles contrastes")
-    extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-    print("Elimination des bords")
-    extrema_bords=detectionEdges(DoG, r, extrema_contraste)
-    # #
-    print(extrema_bords)
-    t2=time.time()
-    print(t2-t1)
 
-    y=extrema[:,0]
-    x=extrema[:,1]
-    y_contraste =extrema_contraste[:, 0]
-    x_contraste =extrema_contraste[:, 1]
-    y_bords =extrema_bords[:, 0]
-    x_bords =extrema_bords[:, 1]
-    #
-    f, axarr = plt.subplots(1,3)
-    axarr[0].imshow(DoG[:,:,1], cmap='gray')
-    axarr[1].imshow(DoG[:,:,1], cmap='gray')
-    axarr[2].imshow(DoG[:,:,1], cmap='gray')
-    #
-    axarr[0].scatter(x,y)
-    axarr[1].scatter(x_contraste,y_contraste)
-    axarr[2].scatter(x_bords,y_bords)
+    for DoG in DoG_list:
+        t = time.time()
+        print("Détection d'extrema et ")
+        print("Elimination des points situés sur les bords de l'image")
+        extrema= suppressionBordsImage(detectionExtrema(DoG), m, n, 8)
+        print("Elimination des faibles contrastes")
+        extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
+        print("Elimination des arêtes")
+        extrema_bords=detectionEdges(DoG, r, extrema_contraste)
+        t2 = time.time() - t
+        print("{0:.2f} secondes".format(t2))
 
-    plt.show()
+
 
 
 

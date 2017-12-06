@@ -28,11 +28,12 @@ def pyramideDeGaussiennes(image_initiale,s,no_octave):
 #attention : on renvoie une liste de sigma unique pour toutes les octaves
 def differenceDeGaussiennes(image_initiale,s,nb_octave):
     DoG_all_octave = []
+    sigma_list = []
     for i in range(nb_octave):
         gaussienne_list, sigma_list = pyramideDeGaussiennes(image_initiale, s, i)
         n_im, m_im, s_im = np.shape(gaussienne_list)
         DoG_list = np.zeros((n_im, m_im, s_im - 1))
         for j in range(0, s_im - 1):
             DoG_list[:, :, j] = gaussienne_list[:, :, j + 1] - gaussienne_list[:, :, j]
-        DoG_all_octave.append(DoG_list)
-    return DoG_list, sigma_list
+        DoG_all_octave.append( DoG_list)
+    return DoG_all_octave, sigma_list

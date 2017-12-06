@@ -54,15 +54,15 @@ def detectionEdges(DoG,r,extrema_list):
     print(np.size(extrema_bords_list, 0))
     return extrema_bords_list
 
-def compteurExtrema(image_initiale,s,nb_octave,r,seuil_contraste):
-    DoG, sigma_list = differenceDeGaussiennes(image_initiale, s, nb_octave)
+def compteurExtrema(image_initiale,s,no_octave,r,seuil_contraste):
+    DoG, sigma_list = differenceDeGaussiennes(image_initiale, s, no_octave)
     extrema= detectionExtrema(DoG)
-    extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-    extrema_bords=detectionBords(DoG, r, extrema_contraste)
-    n_extrema=np.size(extrema,0)
+    extrema_contraste = detectionContraste(DoG, extrema, seuil_contraste)
+    extrema_bords = detectionBords(DoG, r, extrema_contraste)
+    n_extrema=np.size(extrema, 0)
     n_faible_contraste = n_extrema-np.size(extrema_contraste, 0)
     n_points_arrete=n_extrema-n_faible_contraste-np.size(extrema_bords,0)
-    return n_extrema,n_faible_contraste,n_points_arrete
+    return n_extrema, n_faible_contraste, n_points_arrete
 
 
 #a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans soucie

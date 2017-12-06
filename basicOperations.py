@@ -2,24 +2,50 @@ import numpy as np
 
 
 def gradient(image):
-    n,m = np.shape(image)
-    gradx=np.zeros((n,m))
-    grady = np.zeros((n, m))
+    if image.ndim==2:
+        n,m = np.shape(image)
+        gradx=np.zeros((n,m))
+        grady = np.zeros((n, m))
 
-    gradx[:,1:-1] = (image[:,2:m]-image[:,0:m-2])/2
-    gradx[:,-1] = image[:, -1] - image[:, -2]
-    gradx[:, 0] = image[:, 1] - image[:, 0]
+        gradx[:,1:-1] = (image[:,2:m]-image[:,0:m-2])/2
+        gradx[:,-1] = image[:, -1] - image[:, -2]
+        gradx[:, 0] = image[:, 1] - image[:, 0]
 
-    grady[1:-1,:] = (image[2:n, :] - image[0:n - 2, :]) / 2
-    grady[-1,:] = image[-1,:] - image[-2,:]
-    grady[0,:] = image[1,:] - image[0,:]
-    return [grady,gradx]
+        grady[1:-1,:] = (image[2:n, :] - image[0:n - 2, :]) / 2
+        grady[-1,:] = image[-1,:] - image[-2,:]
+        grady[0,:] = image[1,:] - image[0,:]
+        return [grady,gradx]
+    elif image.ndim==3:
+        n, m, p = np.shape(image)
+        gradx = np.zeros((n, m, p))
+        grady = np.zeros((n, m, p))
+        grads = np.zeros((n, m, p))
+
+        gradx[:, 1:-1,:] = (image[:, 2:m,:] - image[:, 0:m - 2,:]) / 2
+        gradx[:, -1,:] = image[:, -1,:] - image[:, -2,:]
+        gradx[:, 0,:] = image[:, 1,:] - image[:, 0,:]
+
+        grady[1:-1, :,:] = (image[2:n, :,:] - image[0:n - 2, :,:]) / 2
+        grady[-1, :,:] = image[-1, :,:] - image[-2, :,:]
+        grady[0, :,:] = image[1, :,:] - image[0, :,:]
+
+        grads[:,:,1:-1] = (image[:,:,2:p] - image[:,:,0:p - 2]) / 2
+        grads[:,:,-1] = image[:,:,-1] - image[:,:,-2]
+        grads[:,:,0] = image[:,:,1] - image[:,:,0]
+        return [grady, gradx, grads]
 
 def hessienne(image):
-    Dy, Dx = gradient(image)
-    Dyy, Dyx = gradient(Dy)
-    Dxy, Dxx = gradient(Dx)
-    return [[Dxx,Dxy],[Dyx,Dyy]]
+    if image.ndim==2:
+        Dy, Dx = gradient(image)
+        Dyy, Dyx = gradient(Dy)
+        Dxy, Dxx = gradient(Dx)
+        return [[Dyy,Dyx],[Dxy,Dxx]]
+    if image.ndim==3:
+        Dy, Dx, Ds = gradient(image)
+        Dyy, Dyx , Dys = gradient(Dy)
+        Dxy, Dxx, Dxs = gradient(Dx)
+        Dsy, Dsx, Dss = gradient(Ds)
+        return [[Dyy,Dyx,Dys],[Dxy,Dxx,Dxs],[Dsy,Dsx,Dss]]
 
 
 def gaussian_filter(n,sigma):

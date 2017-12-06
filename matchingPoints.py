@@ -68,17 +68,14 @@ def reconstruct_image(h, image1, image2):
     xmax, ymax = get_final_pic_dimensions(hinv, image1, image2)
     res = np.zeros((xmax, ymax, 3))
     res[:x1, :y1, 0] = image1[:, :]
-    res[:x1, :y1, 1] = image1[:, :]
-    res[:x1, :y1, 2] = image1[:, :]
     for i in range(0, xmax):
         for j in range(0, ymax):
             i_init, j_init = np.array(np.dot(hinv, [i, j, 1])[0:2], dtype='int')
             if i_init >= x2 or i_init < 0 or j_init >= y2 or j_init < 0:
                 pass
             else:
-                res[i, j, 0] = image2[i_init, j_init]
                 res[i, j, 1] = image2[i_init, j_init]
-                res[i, j, 2] = image2[i_init, j_init]
+
 
 
     return res
@@ -142,7 +139,7 @@ def final_pipeline(desc1, desc2, image1, image2):
 
     r = reconstruct_image(Hsvd, image_initiale1, image_initiale2)
     fig, ax = plt.subplots()
-    ax.imshow(r[:, :, 0], cmap='gray')
+    ax.imshow(r)
     plt.show()
     pass
 

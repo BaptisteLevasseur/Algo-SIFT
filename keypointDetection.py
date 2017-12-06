@@ -25,31 +25,47 @@ def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
     # Il faudra rajouter l'interpolation (je connais pas la théorie sur les dérivées vectorielles)
     list_size = np.size(extrema_list, 0)
     contraste = np.ones(list_size, dtype=bool)
-    n=np.size(DoG,2)
 
     for i in range(0, list_size):
         x = extrema_list[i, :] # Vecteur x = y,x,s
 
-        #Calcul des dérivées premières et secondaires au point X
-        grady, gradx, grads = D_grad
-        D1 = [grady[tuple(x)],gradx[tuple(x)],grads[tuple(x)]]
-        [Dyy, Dyx, Dys], [Dxy, Dxx, Dxs], [Dsy, Dsx, Dss] = D_H
-        D2=[Dyy[tuple(x)],Dyx[tuple(x)],Dys[tuple(x)]],\
-           [Dxy[tuple(x)],Dxx[tuple(x)],Dxs[tuple(x)]],\
-           [Dsy[tuple(x)],Dsx[tuple(x)],Dss[tuple(x)]]
+        #####################################################################
+        #TODO : Valeurs des offsets trop élevé
+        #
+        # #Calcul des dérivées premières et secondaires au point X
+        # grady, gradx, grads = D_grad
+        # D1 = [grady[tuple(x)],gradx[tuple(x)],grads[tuple(x)]]
+        # [Dyy, Dyx, Dys], [Dxy, Dxx, Dxs], [Dsy, Dsx, Dss] = D_H
+        # D2=[Dyy[tuple(x)],Dyx[tuple(x)],Dys[tuple(x)]],\
+        #    [Dxy[tuple(x)],Dxx[tuple(x)],Dxs[tuple(x)]],\
+        #    [Dsy[tuple(x)],Dsx[tuple(x)],Dss[tuple(x)]]
+        #
+        # # Calcul de l'offset estimé
+        # # Limite à revoir, le déterminant trop faible donne des trop grandes valeurs d'offset
+        # if np.linalg.det(D2) > 10**(-10):
+        #     y_e,x_e,s_e=-np.dot(np.linalg.inv(D2),D1)
+        #     print([y_e,x_e,s_e])
+        #     if abs(y_e)>0.5:
+        #         y_corr=np.around(y_e).astype(int)
+        #         y_e=np.sign(y_e)*(y_corr-y_e)
+        #         x[0]+=y_corr
+        #     if abs(x_e)>0.5:
+        #         x_corr = np.around(x_e).astype(int)
+        #         x_e = np.sign(x_e) * (x_corr - x_e)
+        #         x[1] += x_corr
+        #     if abs(s_e)>0.5:
+        #         s_corr = np.around(s_e).astype(int)
+        #         s_e = np.sign(s_e) * (s_corr - s_e)
+        #         x[2] += s_corr
+        #     x_est=[y_e,x_e,s_e]
+        # else:
+        #     x_est=[0, 0, 0]
+        # # Contraste interpolé
+        # D=DoG[tuple(x)]+1/2*np.dot(np.transpose(D1),x_est)
+        ###################################################################
 
-        # Calcul de l'offset estimé
-        if np.linalg.det(D2) > 10**(-10):
-            x_est=-np.dot(np.linalg.inv(D2),D1)
-        else:
-            x_est=[0, 0, 0]
-        print(x_est)
-        # Contraste interpolé
-        D=DoG[tuple(x)]+1/2*np.dot(np.transpose(D1),x_est)
-        print(D)
 
-
-        # offset from Taylor
+        #Remplacer DoG[tuple(x)] par D si ça marche
         if abs(DoG[tuple(x)]) < seuil_contraste:
             contraste[i] = False
 

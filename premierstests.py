@@ -13,14 +13,6 @@ from keypointDescriptor import *
 import matchingPoints
 
 
-#permet d'afficher une image; l'image se fermera en appuyant sur une touche du clavier
-def displayImage(image, title = 'image'):
-    ratio = image.shape[1]/image.shape[0]
-    cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('image', int(800*ratio), 800 )
-    cv2.imshow("image", image)
-    cv2.waitKey(0)
-
 
 def castToGrayScale(image):
     image_gray = np.zeros(image.shape[0:2])
@@ -84,11 +76,9 @@ def getDescriptors(image_name):
     final_descriptor_list = np.empty((0, n_zone ** 2 * n_bins + 2))
 
     for octave in range(nb_octave):
-        print("Octave  ", octave,":")
         L_list, sigma_list = pyramideDeGaussiennes(image, s, octave)
-        print("Orientation point cle")
         points_cles_orientes_list = orientationPointsCles(extrema_final_list[octave], L_list, sigma_list)
-        print("Calcul des descripteurs")
+
         descripteurs_list = np.empty((0, n_zone ** 2 * n_bins + 2))
         for i in range(0, np.size(points_cles_orientes_list, 0)):
             point_cle = points_cles_orientes_list[i]
@@ -98,24 +88,27 @@ def getDescriptors(image_name):
             descripteur[0:2] = descripteur[0:2]*(2**octave)
             descripteurs_list = np.vstack((descripteurs_list, descripteur))
         final_descriptor_list = np.vstack((final_descriptor_list, descripteurs_list))
-
     return final_descriptor_list
 
 
-
-
 if __name__ == "__main__":
-    image1 = "gauche2.jpg"
-    image2 = "droite2.jpg"
-    lena = "lena.jpg"
+    image1 = "Redgauche.jpg"
+    image2 = "Reddroite.jpg"
+
+    # à utiliser si on a déjà les descripteurs
+    loadDesc = False
 
 
-    d1 = getDescriptors(lena)
-    # d2 = getDescriptors(image2)
-    # np.savetxt('d1.txt', d1)
-    # np.savetxt('d2.txt', d2)
 
-    # d1=np.loadtxt('d1.txt')
-    # d2 = np.loadtxt('d2.txt')
+    d1 = None
+    d2 = None
+    if loadDesc:
+        d1 = np.loadtxt('d1.txt')
+        d2 = np.loadtxt('d2.txt')
+    else:
+        d1 = getDescriptors(image1)
+        d2 = getDescriptors(image2)
+        np.savetxt('desc_' + image1 + '.txt', d1)
+        np.savetxt('desc_' + image2 + '.txt', d2)
 
-    # matchingPoints.final_pipeline(d1,d2,image1,image2)
+    matchingPoints.final_pipeline(d1,d2,image1,image2)

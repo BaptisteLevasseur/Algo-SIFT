@@ -45,6 +45,7 @@ def display_circle_on_points(points1, points2,  image1, image2):
         ax[1].add_artist(circle2)
 
     plt.show()
+    pass
 
 
 def get_final_pic_dimensions(h, image1, image2):
@@ -67,6 +68,9 @@ def reconstruct_image(h, image1, image2):
     xmax, ymax = get_final_pic_dimensions(h, image1, image2)
     res = np.zeros((xmax, ymax, 3))
     hinv = np.linalg.inv(h)
+    res[:x1, :y1, 0] = image1[:, :]
+    res[:x1, :y1, 1] = image1[:, :]
+    res[:x1, :y1, 2] = image1[:, :]
     for i in range(0,xmax):
         for j in range(0, ymax):
             i_init, j_init = np.array(np.dot(h, [i, j, 1])[0:2], dtype='int')
@@ -76,9 +80,7 @@ def reconstruct_image(h, image1, image2):
                 res[i, j, 0] = image2[i_init, j_init]
                 res[i, j, 1] = image2[i_init, j_init]
                 res[i, j, 2] = image2[i_init, j_init]
-    res[:x1, :y1, 0] = image1[:, :]
-    res[:x1, :y1, 1] = image1[:, :]
-    res[:x1, :y1, 2] = image1[:, :]
+
     return res
 
 
@@ -120,8 +122,9 @@ def final_pipeline(desc1, desc2, image1, image2):
 
     r = reconstruct_image(Hsvd, image_initiale1, image_initiale2)
     fig, ax = plt.subplots()
-    ax.imshow(r, cmap='gray')
+    ax.imshow(r[:, :, 0], cmap='gray')
     plt.show()
+    pass
 
 if __name__ == '__main__':
     a = np.array([[100, 120, 1, 2], [300, 180, 3, 4], [300, 420, 10, 10], [400, 100, 100, 100], [500, 220, 8, 9]])

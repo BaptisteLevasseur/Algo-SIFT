@@ -101,8 +101,8 @@ def getDescriptors(image_name):
 
 
 if __name__ == "__main__":
-    image1 = "gauche.jpg"
-    image2 = "droite.jpg"
+    image1 = "gaucheReduit.jpg"
+    image2 = "droiteReduit.jpg"
     d1 = getDescriptors(image1)
     d2 = getDescriptors(image2)
 

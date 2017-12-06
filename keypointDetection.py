@@ -81,10 +81,13 @@ def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
 
 
 #2.2 Détection des points clés
+#on note qu'on utilise pas sigma
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
     # Pourquoi a t-on besoin de sigma? Bonne question
     extrema = detectionExtrema(DoG)
     extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste)
     extrema_bords = detectionEdges(DoG, r_courb_principale, extrema_contraste)
+    xsize,ysize = DoG[resolution_octave].shape[0:2]
+    extrema_bords_final = suppressionBordsImage(extrema_bords, xsize,ysize, 8)
     extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
-    return extrema_bords,sigma
+    return extrema_bords

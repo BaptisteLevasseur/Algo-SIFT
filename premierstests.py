@@ -63,22 +63,17 @@ def main():
     # plt.show()
 
 
-    r=10
+    r_courb_principale=10
     seuil_contraste=0.03
     n, m = np.shape(image)
 
     extrema_final_list = []
 
-    for DoG in DoG_list:
+    for octave in range(nb_octave):
         t = time.time()
-        print("Détection d'extrema et ")
-        print("Elimination des points situés sur les bords de l'image")
-        extrema= suppressionBordsImage(detectionExtrema(DoG), m, n, 8)
-        print("Elimination des faibles contrastes")
-        extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-        print("Elimination des arêtes")
-        extrema_bords=detectionEdges(DoG, r, extrema_contraste)
-        extrema_final_list.append(extrema_bords)
+        DoG = DoG_list[octave]
+        extrema = detectionPointsCles(DoG, sigma_list, seuil_contraste, r_courb_principale, octave)
+        extrema_final_list.append(extrema)
         t2 = time.time() - t
         print("{0:.2f} secondes".format(t2))
 

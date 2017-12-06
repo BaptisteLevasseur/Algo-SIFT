@@ -96,7 +96,9 @@ def getDescriptors(image_name):
             descripteur[0:2] = descripteur[0:2]*(2**octave)
             descripteurs_list = np.vstack((descripteurs_list, descripteur))
         final_descriptor_list = np.vstack((final_descriptor_list, descripteurs_list))
-    pass
+
+    return final_descriptor_list
+
 
 
 

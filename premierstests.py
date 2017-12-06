@@ -10,7 +10,7 @@ from keypointDetection import *
 from scaleSpace import *
 from timeDecorator import timeit
 from keypointDescriptor import *
-
+import matchingPoints
 
 
 #permet d'afficher une image; l'image se fermera en appuyant sur une touche du clavier
@@ -29,9 +29,9 @@ def castToGrayScale(image):
 
 
 # full pipeline
-def main():
+def getDescriptors(image_name):
     t1=time.time()
-    image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
+    image_initiale = mpimg.imread(image_name)[:, :, 1]
     image=image_initiale/255
 
     nb_octave = 4
@@ -63,22 +63,17 @@ def main():
     # plt.show()
 
 
-    r=10
+    r_courb_principale=10
     seuil_contraste=0.03
     n, m = np.shape(image)
 
     extrema_final_list = []
 
-    for DoG in DoG_list:
+    for octave in range(nb_octave):
         t = time.time()
-        print("Détection d'extrema et ")
-        print("Elimination des points situés sur les bords de l'image")
-        extrema= suppressionBordsImage(detectionExtrema(DoG), m, n, 8)
-        print("Elimination des faibles contrastes")
-        extrema_contraste=detectionContraste(DoG,extrema,seuil_contraste)
-        print("Elimination des arêtes")
-        extrema_bords=detectionEdges(DoG, r, extrema_contraste)
-        extrema_final_list.append(extrema_bords)
+        DoG = DoG_list[octave]
+        extrema = detectionPointsCles(DoG, sigma_list, seuil_contraste, r_courb_principale, octave)
+        extrema_final_list.append(extrema)
         t2 = time.time() - t
         print("{0:.2f} secondes".format(t2))
 
@@ -86,7 +81,7 @@ def main():
     n_pixel_zone = 4  # Donc 4x4 pixel par zone
     n_bins = 8
 
-    final_descriptor_list = []
+    final_descriptor_list = np.empty((0, n_zone ** 2 * n_bins + 2))
 
     for octave in range(nb_octave):
         L_list, sigma_list = pyramideDeGaussiennes(image, s, octave)
@@ -98,9 +93,17 @@ def main():
             L_grady_region, L_gradx_region = rotationGradient(point_cle, L_list, 16)
             descripteur = descripteurPointCle(point_cle, L_list, sigma_list, L_grady_region, L_gradx_region, n_pixel_zone,
                                           n_zone, n_bins)
+            descripteur[0:2] = descripteur[0:2]*(2**octave)
             descripteurs_list = np.vstack((descripteurs_list, descripteur))
-            final_descriptor_list.append(descripteurs_list)
+        final_descriptor_list = np.vstack((final_descriptor_list, descripteurs_list))
     pass
 
+
+
 if __name__ == "__main__":
-    main()
+    image1 = "gauche.jpg"
+    image2 = "droite.jpg"
+    d1 = getDescriptors(image1)
+    d2 = getDescriptors(image2)
+
+    matchingPoints.final_pipeline(d1,d2,image1,image2)

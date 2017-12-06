@@ -88,8 +88,40 @@ def castToGrayScale(image):
     return image_gray
 
 
+def final_pipeline(desc1, desc2, image1, image2):
+    a = desc1
+    b = desc2
+    image_initiale1 = mpimg.imread(image1)[:, :, 1]
+
+    image_initiale2 = mpimg.imread(image2)[:, :, 1]
+    image_initiale1 = image_initiale1 / 255
+    image_initiale2 = image_initiale2 / 255
+    # image_initiale1 = castToGrayScale(image_initiale1)
+    # image_initiale2 = castToGrayScale(image_initiale2)
+    c = distanceInterPoints(a, b)
+    d = get_n_nearest_points(c, 4)
+    print(d)
+    p1, p2 = get_nearest_descriptors_couples(d, a, b)
+    display_circle_on_points(p1, p2, image_initiale1, image_initiale2)
+
+    A = constructionA(p1, p2)
+    Hsvd = get_H_by_SVD(A)
+    HpasSvd = get_H_by_quad(A)
+
+    print(np.dot(A, np.reshape(Hsvd, (9, 1))))
+
+    print(np.dot(A, np.reshape(HpasSvd, (9, 1))))
+
+    print(Hsvd)
+    print(HpasSvd)
+    print(Hsvd - HpasSvd)
 
 
+
+    r = reconstruct_image(Hsvd, image_initiale1, image_initiale2)
+    fig, ax = plt.subplots()
+    ax.imshow(r, cmap='gray')
+    plt.show()
 
 if __name__ == '__main__':
     a = np.array([[100, 120, 1, 2], [300, 180, 3, 4], [300, 420, 10, 10], [400, 100, 100, 100], [500, 220, 8, 9]])

@@ -1,5 +1,5 @@
 import numpy as np
-
+from timeDecorator import timeit
 
 
 
@@ -30,12 +30,14 @@ def constructionA(points1, points2):
         A[2 * i + 1, 8] = -y2
     return A
 
+@timeit
 def get_H_by_SVD(A):
     u, s, v = np.linalg.svd(A)
     h = np.reshape(v[-1, :], (3, 3))
     h = h / h[2,2]
     return h
 
+@timeit
 def get_H_by_quad(A):
     AT = np.transpose(A)
     ATA = np.dot(AT,A)

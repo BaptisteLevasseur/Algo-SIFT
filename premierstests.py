@@ -22,59 +22,37 @@ def castToGrayScale(image):
 
 # full pipeline
 def getDescriptors(image_name):
+    print("Computing descriptors of "+image_name+"...")
     t1=time.time()
+    #On réalise les calculs sur le canal rouge de l'image
     image_initiale = mpimg.imread(image_name)[:, :, 1]
     image=image_initiale/255
 
     nb_octave = 4
     s=3
-
-
-
-    # Plot la pyramide de gaussienne
-
-    print("Pyramide de Gaussiennes")
-    L,sigma_list = pyramideDeGaussiennes(image, s, 0)
-    # f,axarr = plt.subplots(2,3)
-    # axarr[0,0].imshow(L[:,:,0],cmap='gray')
-    # axarr[0,1].imshow(L[:,:,1],cmap='gray')
-    # axarr[0,2].imshow(L[:,:,2],cmap='gray')
-    # axarr[1,0].imshow(L[:,:,3],cmap='gray')
-    # axarr[1,1].imshow(L[:,:,4],cmap='gray')
-    # axarr[1,2].imshow(L[:,:,5],cmap='gray')
-
     # Plot la différence de gaussienne
     print("Différence de Gaussiennes")
     DoG_list, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
-    # f, axarr = plt.subplots(2, 3)
-    # axarr[0, 0].imshow(DoG[:, :, 0],cmap='gray')
-    # axarr[0, 1].imshow(DoG[:, :, 1],cmap='gray')
-    # axarr[0, 2].imshow(DoG[:, :, 2],cmap='gray')
-    # axarr[1, 0].imshow(DoG[:, :, 3],cmap='gray')
-    # axarr[1, 1].imshow(DoG[:, :, 4],cmap='gray')
-    # plt.show()
-
 
     r_courb_principale=10
     seuil_contraste=0.03
-    n, m = np.shape(image)
 
     extrema_final_list = []
-
     for octave in range(nb_octave):
+        print("Detection des points-clés dans l'octave " + str(octave))
         t = time.time()
         DoG = DoG_list[octave]
         extrema = detectionPointsCles(DoG, sigma_list, seuil_contraste, r_courb_principale, octave)
         extrema_final_list.append(extrema)
         t2 = time.time() - t
-        print("{0:.2f} secondes".format(t2))
+        print("Calcul effectué en {0:.2f} secondes".format(t2))
 
     n_zone = 4  # Donc 4x4 zones
     n_pixel_zone = 4  # Donc 4x4 pixel par zone
     n_bins = 8
 
     final_descriptor_list = np.empty((0, n_zone ** 2 * n_bins + 2))
-
+    print("Computing Descriptors...")
     for octave in range(nb_octave):
         L_list, sigma_list = pyramideDeGaussiennes(image, s, octave)
         points_cles_orientes_list = orientationPointsCles(extrema_final_list[octave], L_list, sigma_list)
@@ -96,7 +74,7 @@ if __name__ == "__main__":
     image2 = "droite.jpg"
 
     # à utiliser si on a déjà les descripteurs
-    loadDesc = False
+    loadDesc = True
 
     d1 = None
     d2 = None
@@ -116,5 +94,5 @@ if __name__ == "__main__":
         d2 = getDescriptors(image2)
         np.savetxt('desc_' + image1 + '.txt', d1)
         np.savetxt('desc_' + image2 + '.txt', d2)
-    print('Entering final pipeline')
-    matchingPoints.final_pipeline(d1,d2,image1,image2)
+    print('Entering final pipeline...')
+    matchingPoints.final_pipeline(d1, d2, image1, image2)

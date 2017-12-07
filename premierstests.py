@@ -70,11 +70,11 @@ def getDescriptors(image_name):
 
 
 if __name__ == "__main__":
-    image1 = "gauche.jpg"
-    image2 = "droite.jpg"
+    image1 = "Redgauche.jpg"
+    image2 = "Reddroite.jpg"
 
     # à utiliser si on a déjà les descripteurs
-    loadDesc = True
+    loadDesc = False
 
     d1 = None
     d2 = None

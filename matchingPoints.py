@@ -1,13 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import math
 
 from homographie import *
+from timeDecorator import *
 
 
 
 
-#attention : les deu premiers indices sont la position
+#attention : les deux premiers indices sont la position
+@timeit
 def distanceInterPoints(points_image1, points_image2):
     nb_points1 = points_image1.shape[0]
     nb_points2 = points_image2.shape[0]
@@ -50,7 +53,6 @@ def display_circle_on_points(points1, points2,  image1, image2):
 
 def get_final_pic_dimensions(h, image1, image2):
     xmax, ymax = image2.shape[0:2]
-    #faut il inverser ici ?
     hinv = np.linalg.inv(h)
     final_image_size = np.dot(h,np.array([xmax, ymax, 1]))
     xfinal, yfinal = final_image_size[0:2]
@@ -59,6 +61,7 @@ def get_final_pic_dimensions(h, image1, image2):
     return int(xfinal), int(yfinal)
 
 #attention : ici on bosser avec des images couleur
+@timeit
 def reconstruct_image(h, image1, image2):
     x1 = image1.shape[0]
     y1 = image1.shape[1]
@@ -77,6 +80,21 @@ def reconstruct_image(h, image1, image2):
                 res[i, j, :] = image2[i_init, j_init, :]
     return res
 
+
+def correction_histogramme(image1, image2):
+    t1 = np.mean(image1, axis=0)
+    t2 = np.mean(image2, axis=0)
+    col_means1 = np.mean(t1, axis=0)
+    col_means2 = np.mean(t2, axis=0)
+    dif_col = col_means1 - col_means2
+    image2[:, :, 0] = image2[:, :, 0] + dif_col[0]
+    image2[:, :, 1] = image2[:, :, 1] + dif_col[1]
+    image2[:, :, 2] = image2[:, :, 2] + dif_col[2]
+
+    image2[image2 < 0] = 0
+    image2[image2 > 1] = 1
+
+    return image2
 
 
 
@@ -105,24 +123,28 @@ def final_pipeline(desc1, desc2, image1, image2):
     image_initiale2 = mpimg.imread(image2)[:, :, :]
     image_initiale1 = image_initiale1 / 255
     image_initiale2 = image_initiale2 / 255
+
+    print("Correction de l'exposition...")
+    image_initiale2 = correction_histogramme(image_initiale1, image_initiale2)
+
     print("Calcul les descripteurs les plus proches...")
     c = distanceInterPoints(a, b)
     nb_plus_proche_voisins = 50
     d = get_n_nearest_points(c, nb_plus_proche_voisins)
-    print(d)
+
     #on check si certains descripteurs sont superposés; auquel cas on prend les suivants
     #pour avoir un système inversible
 
     p1_unpurged, p2_unpurged = get_nearest_descriptors_couples(d, a, b)
-    print("Suppression des descripteurs superposés")
+    print("Suppression des descripteurs superposés...")
     p1, p2 = check_for_superposed_descriptors(p1_unpurged, p2_unpurged)
-    display_circle_on_points(p1[:10, :], p2[:10, :], image_initiale1, image_initiale2)
+    display_circle_on_points(p1[:50, :], p2[:50, :], image_initiale1, image_initiale2)
 
-    A = constructionA(p1[:10, :], p2[:10, :])
+    A = constructionA(p1[:50, :], p2[:50, :])
     Hsvd = get_H_by_SVD(A)
     HpasSvd = get_H_by_quad(A)
 
-    print("Vérifications : norme 2 de A*h par les deux méthodes")
+    print("Vérifications : norme euclidienne de A*h par les deux méthodes")
     print(np.linalg.norm(np.dot(A, np.reshape(Hsvd, (9, 1)))))
     print(np.linalg.norm(np.dot(A, np.reshape(HpasSvd, (9, 1)))))
 
@@ -138,6 +160,25 @@ def final_pipeline(desc1, desc2, image1, image2):
     pass
 
 
+
+
+
+if __name__ == '__main__':
+    image1 = 'Redgauche.jpg'
+    image2 = 'Reddroite.jpg'
+    image_initiale1 = mpimg.imread(image1)[:, :, :]
+    image_initiale2 = mpimg.imread(image2)[:, :, :]
+    image_initiale1 = image_initiale1 / 255
+    image_initiale2 = image_initiale2 / 255
+
+    im2cor = correction_histogramme(image_initiale1,image_initiale2)
+    fig, ax = plt.subplots(3, 1)
+    ax[0].imshow(image1)
+    ax[1].imshow(image2)
+    ax[2].imshow(im2cor)
+
+    plt.show()
+    pass
 
 
 

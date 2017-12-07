@@ -14,14 +14,14 @@ from timeDecorator import timeit
 
 
 
-def displayDescriptor(descriptorList, image):
+def displayKeypoints(points_cles_list, image):
     fig, ax = plt.subplots()
 
     ax.imshow(image,cmap='gray')
 
-    for i in range(descriptorList.shape[0]):
-        x = descriptorList[i,0]
-        y = descriptorList[i,1]
+    for i in range(points_cles_list.shape[0]):
+        y = descriptorList[i,0]
+        x = descriptorList[i,1]
         mag = descriptorList[i,2]
         theta = descriptorList[i,3]
 
@@ -38,7 +38,7 @@ def displayDescriptor(descriptorList, image):
 descriptorList = np.array([[10, 10, 200, 0], [100, 200, 120, 1], [400, 400, 40, 2], [200, 20, 100, 0]])
 image_initiale = mpimg.imread("lena.jpg")[:, :, 1]
 image_initiale = image_initiale / 255
-displayDescriptor(descriptorList, image_initiale)
+displayKeypoints(descriptorList, image_initiale)
 
 
 

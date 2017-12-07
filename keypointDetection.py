@@ -1,5 +1,6 @@
 import numpy as np
 from basicOperations import *
+from scaleSpace import *
 
 
 def detectionExtrema(DoG):
@@ -92,15 +93,22 @@ def detectionEdges(DoG,r,extrema_list):
     print(np.size(extrema_bords_list, 0))
     return extrema_bords_list
 
-def compteurExtrema(image_initiale,s,no_octave,r,seuil_contraste):
-    DoG, sigma_list = differenceDeGaussiennes(image_initiale, s, no_octave)
+def compteurExtrema(DoG_list,no_octave,r,seuil_contraste):
+    DoG=DoG_list[no_octave]
+    D_grad=gradient(DoG)
+    D_H = 0
     extrema= detectionExtrema(DoG)
-    extrema_contraste = detectionContraste(DoG, extrema, seuil_contraste)
-    extrema_bords = detectionBords(DoG, r, extrema_contraste)
+    extrema_contraste = detectionContraste(DoG, extrema, seuil_contraste,D_grad,D_H)
+    extrema_edges = detectionEdges(DoG, r, extrema_contraste)
+    xsize, ysize = DoG.shape[0:2]
+    # pour avoir des valeurs valides après rotation (dans la partie descripteur),
+    # on enlève les points à 8*sqrt(2) du bord, soit à moins de 12
+    extrema_final = suppressionBordsImage(extrema_edges, xsize, ysize, 12)
     n_extrema=np.size(extrema, 0)
     n_faible_contraste = n_extrema-np.size(extrema_contraste, 0)
-    n_points_arrete=n_extrema-n_faible_contraste-np.size(extrema_bords,0)
-    return n_extrema, n_faible_contraste, n_points_arrete
+    n_points_arrete=n_extrema-n_faible_contraste-np.size(extrema_edges,0)
+    n_points_bords = n_extrema - n_faible_contraste - n_points_arrete - np.size(extrema_final, 0)
+    return n_extrema, n_faible_contraste, n_points_arrete, n_points_bords
 
 
 #a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans soucie
@@ -127,13 +135,13 @@ def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolut
     D_H = hessienne(DoG)
 
     extrema = detectionExtrema(DoG)
+
+
+    extrema_contraste = detectionContraste(DoG, extrema,seuil_contraste,D_grad,D_H)
+    extrema_edges = detectionEdges(DoG, r_courb_principale, extrema_contraste)
     xsize, ysize = DoG.shape[0:2]
     # pour avoir des valeurs valides après rotation (dans la partie descripteur),
     # on enlève les points à 8*sqrt(2) du bord, soit à moins de 12
-    extrema_bords = suppressionBordsImage(extrema, xsize, ysize, 12)
+    extrema_final = suppressionBordsImage(extrema_edges, xsize, ysize, 12)
 
-    extrema_contraste = detectionContraste(DoG, extrema_bords,seuil_contraste,D_grad,D_H)
-    extrema_edges = detectionEdges(DoG, r_courb_principale, extrema_contraste)
-
-    #extrema_bords[:,0:2] = extrema_bords[:,0:2]*resolution_octave #Compense le downscaling pour les afficher sur l'image finale
-    return extrema_edges
+    return extrema_final

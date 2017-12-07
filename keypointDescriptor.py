@@ -76,7 +76,7 @@ def rotationGradient(point_cle,L,n_pixel):
             mat_rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
             # Coordonnées des points de la rotation
             i_rot, j_rot = np.dot(mat_rot, np.array([i_ref, j_ref]))
-            y_rot, x_rot = np.floor(np.array([i_rot, j_rot]) + np.array([y, x])).astype(int)
+            y_rot, x_rot = np.round(np.array([i_rot, j_rot]) + np.array([y, x])).astype(int)
             # Enregistrement des régions de rotation
             L_gradx_region[i, j] = L_gradx[y_rot, x_rot]
             L_grady_region[i, j] = L_grady[y_rot, x_rot]
@@ -125,5 +125,13 @@ def descripteurPointCle(point_cle,L,sigma_list,L_grady_region,L_gradx_region,n_p
                 # Pondération par la fenêtre gaussienne et normalisation par l'amplitude
                 hist[k] = sum(ponderation_zone[pixels_intervalle])
             descripteur = np.concatenate([descripteur, hist])
+
+    # Normalisation pour rendre insensible aux changements d'illumination
+    descripteur128 = descripteur[2::]
+    descripteur128 = descripteur128 / np.linalg.norm(descripteur128)
+    # Suppression des valeurs au delà de 0.2 pour les illuminations non linéaires
+    descripteur128[descripteur128 > 0.2] = 0
+    descripteur[2::] = descripteur128 / np.linalg.norm(descripteur128)
+
     return descripteur
 

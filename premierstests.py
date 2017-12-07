@@ -74,7 +74,7 @@ if __name__ == "__main__":
     image2 = "Reddroite.jpg"
 
     # à utiliser si on a déjà les descripteurs
-    loadDesc = False
+    loadDesc = True
 
     d1 = None
     d2 = None

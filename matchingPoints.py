@@ -9,7 +9,8 @@ from timeDecorator import *
 
 
 
-#attention : les deux premiers indices sont la position
+#attention : les deux premiers indices sont la position (x,y)
+#calcule la matric des distances entre les desripteurs de l'image 1 et ceux de l'image 2
 @timeit
 def distanceInterPoints(points_image1, points_image2):
     nb_points1 = points_image1.shape[0]
@@ -20,7 +21,7 @@ def distanceInterPoints(points_image1, points_image2):
             d[i, j] = np.sqrt(np.sum(np.power(points_image1[i, 2:]-points_image2[j, 2:], 2)))
     return d
 
-
+#renvoie les indices des descripteurs retenus
 def get_n_nearest_points(distance_matrix, n):
     x, y = distance_matrix.shape
     a = np.argsort(distance_matrix.ravel())
@@ -32,7 +33,7 @@ def get_n_nearest_points(distance_matrix, n):
 def get_nearest_descriptors_couples(indices, points_image1, points_image2):
     return points_image1[indices[:, 0], :2], points_image2[indices[:, 1], :2]
 
-
+#affiche les descripteurs des deux images les plus proches
 #peut sembler faux si un descripteur d'une image est associé à plusieurs descripteurs d'une autre image : les cercles se superposent
 def display_circle_on_points(points1, points2,  image1, image2):
     fig, ax = plt.subplots(2,1)
@@ -50,7 +51,7 @@ def display_circle_on_points(points1, points2,  image1, image2):
     plt.show()
     pass
 
-
+#renvoie les dimensions de l'image finale
 def get_final_pic_dimensions(h, image1, image2):
     xmax, ymax = image2.shape[0:2]
     hinv = np.linalg.inv(h)
@@ -60,7 +61,7 @@ def get_final_pic_dimensions(h, image1, image2):
     yfinal = np.max([yfinal, image1.shape[1]])
     return int(xfinal), int(yfinal)
 
-#attention : ici on bosser avec des images couleur
+#attention : ici on travaille avec des images couleur
 @timeit
 def reconstruct_image(h, image1, image2):
     x1 = image1.shape[0]
@@ -81,6 +82,8 @@ def reconstruct_image(h, image1, image2):
     return res
 
 
+#correction d'histogramme : on aligne la moyenne des trois canaux de l'image 2 sur l'image 1
+#voir rapport
 def correction_histogramme(image1, image2):
     t1 = np.mean(image1, axis=0)
     t2 = np.mean(image2, axis=0)
@@ -97,7 +100,7 @@ def correction_histogramme(image1, image2):
     return image2
 
 
-
+#fonction vérifiant qu'il n'y a pas de descripteurs trop proches les uns des autres dans les descripteurs les plus proches les uns des autres.
 def check_for_superposed_descriptors(desc1, desc2):
 
     for i in range(desc1.shape[0]-1):
@@ -129,7 +132,7 @@ def final_pipeline(desc1, desc2, image1, image2):
 
     print("Calcul les descripteurs les plus proches...")
     c = distanceInterPoints(a, b)
-    nb_plus_proche_voisins = 50
+    nb_plus_proche_voisins = 20
     d = get_n_nearest_points(c, nb_plus_proche_voisins)
 
     #on check si certains descripteurs sont superposés; auquel cas on prend les suivants
@@ -138,9 +141,10 @@ def final_pipeline(desc1, desc2, image1, image2):
     p1_unpurged, p2_unpurged = get_nearest_descriptors_couples(d, a, b)
     print("Suppression des descripteurs superposés...")
     p1, p2 = check_for_superposed_descriptors(p1_unpurged, p2_unpurged)
-    display_circle_on_points(p1[:50, :], p2[:50, :], image_initiale1, image_initiale2)
+    np_descriptors_retenus = 10
+    display_circle_on_points(p1[:np_descriptors_retenus, :], p2[:np_descriptors_retenus, :], image_initiale1, image_initiale2)
 
-    A = constructionA(p1[:50, :], p2[:50, :])
+    A = constructionA(p1[:np_descriptors_retenus, :], p2[:np_descriptors_retenus, :])
     Hsvd = get_H_by_SVD(A)
     HpasSvd = get_H_by_quad(A)
 

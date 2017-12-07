@@ -10,14 +10,73 @@ def detectionExtrema(DoG):
     n,m, nb_sigma= np.shape(DoG)
     extrema_list = np.empty((0, 3), int)
     #TODO: Optimiser la fonction
-    for s in range(1,nb_sigma-1):
-        for y in range(1,n-1):
-            for x in range(1,m-1):
+    for s in range(1, nb_sigma-1):
+        for y in range(1, n-1):
+            for x in range(1, m-1):
                 # Si le maximum au centre des 24 pixels
-                maxi=np.argmax(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
-                mini=np.argmin(DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2])==13
+                maxi = False
+                mini = False
+                cube = DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2]
+                zz = 1
+                ww = 1
+                qq = 1
+                mid = cube[zz, ww, qq]
+                if cube[zz-1, ww-1, qq-1] > mid:
+                    mini = cube[zz-1, ww-1, qq] > mid and(
+                        cube[zz-1, ww-1, qq+1] > mid and
+                        cube[zz - 1, ww, qq - 1] > mid and
+                        cube[zz - 1, ww, qq] > mid and
+                        cube[zz - 1, ww, qq + 1] > mid and
+                        cube[zz - 1, ww + 1, qq - 1] > mid and
+                        cube[zz - 1, ww + 1, qq] > mid and
+                        cube[zz - 1, ww + 1, qq + 1] > mid and
+                        cube[zz, ww - 1, qq - 1] > mid and
+                        cube[zz, ww - 1, qq] > mid and
+                        cube[zz, ww - 1, qq + 1] > mid and
+                        cube[zz, ww, qq-1] > mid and
+                        cube[zz, ww, qq+1] > mid and
+                        cube[zz, ww-1, qq-1] > mid and
+                        cube[zz, ww-1, qq] > mid and
+                        cube[zz, ww-1, qq+1] > mid and
+                        cube[zz + 1, ww - 1, qq - 1] > mid and
+                        cube[zz + 1, ww - 1, qq] > mid and
+                        cube[zz + 1, ww - 1, qq + 1] > mid and
+                        cube[zz + 1, ww, qq - 1] > mid and
+                        cube[zz + 1, ww, qq] > mid and
+                        cube[zz + 1, ww, qq + 1] > mid and
+                        cube[zz + 1, ww + 1, qq - 1] > mid and
+                        cube[zz + 1, ww + 1, qq] > mid and
+                        cube[zz + 1, ww + 1, qq + 1] > mid)
+
+                if cube[zz - 1, ww - 1, qq - 1] < mid:
+                    maxi = cube[zz - 1, ww - 1, qq] < mid and (
+                        cube[zz - 1, ww - 1, qq + 1] < mid and
+                        cube[zz - 1, ww, qq - 1] < mid and
+                        cube[zz - 1, ww, qq] < mid and
+                        cube[zz - 1, ww, qq + 1] < mid and
+                        cube[zz - 1, ww + 1, qq - 1] < mid and
+                        cube[zz - 1, ww + 1, qq] < mid and
+                        cube[zz - 1, ww + 1, qq + 1] < mid and
+                        cube[zz, ww - 1, qq - 1] < mid and
+                        cube[zz, ww - 1, qq] < mid and
+                        cube[zz, ww - 1, qq + 1] < mid and
+                        cube[zz, ww, qq - 1] < mid and
+                        cube[zz, ww, qq + 1] < mid and
+                        cube[zz, ww - 1, qq - 1] < mid and
+                        cube[zz, ww - 1, qq] < mid and
+                        cube[zz, ww - 1, qq + 1] < mid and
+                        cube[zz + 1, ww - 1, qq - 1] < mid and
+                        cube[zz + 1, ww - 1, qq] < mid and
+                        cube[zz + 1, ww - 1, qq + 1] < mid and
+                        cube[zz + 1, ww, qq - 1] < mid and
+                        cube[zz + 1, ww, qq] < mid and
+                        cube[zz + 1, ww, qq + 1] < mid and
+                        cube[zz + 1, ww + 1, qq - 1] < mid and
+                        cube[zz + 1, ww + 1, qq] < mid and
+                        cube[zz + 1, ww + 1, qq + 1] < mid)
+
                 if maxi or mini: # or maxi (sur une image grayscale de détection de contour, les bords sont en noir => minimums)
-                    extrema_list = np.vstack((extrema_list, [y,x,s]))
+                    extrema_list = np.vstack((extrema_list, [y, x, s]))
 
     print(np.size(extrema_list,0))
     return extrema_list
@@ -131,8 +190,11 @@ def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
     # Pourquoi a t-on besoin de sigma? Bonne question
 
-    D_grad=gradient(DoG)
-    D_H = hessienne(DoG)
+    #D_grad=gradient(DoG)
+    #D_H = hessienne(DoG)
+
+    D_grad = 0
+    D_H = 0
 
     extrema = detectionExtrema(DoG)
 

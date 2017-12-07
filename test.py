@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import sys
-import cv2
 import scipy.signal
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -17,6 +16,8 @@ from premierstests import *
 from matchingPoints import *
 
 
+#fichier utilisé pour obtenir les figures ne faisant pas partie du pipeline de base.
+#les fonctions portent le nom
 
 
 
@@ -165,25 +166,20 @@ def main():
  nb_octave = 4
  s = 3
 
+ #question1_1(image,s) # Pyramide de gaussiennes
+ #question1_2(image,nb_octave,s) # Différence de gaussienne
+ #question2_2(image,nb_octave,s) # Compteurs du nombre de points clés (avant orientation)
+ #question2_3and4(image, nb_octave, s) # Evolution nombre points cles Sauvegarde points clés
+ question2_5(image,nb_octave,s) # tracé des points clés
 
+ #question2_6(image_name,2) # sauvegarde des descripteurs (1 pour gauche et 2 pour droite)
 
-
- # question1_1(image,s) # Pyramide de gaussiennes
- # question1_2(image,nb_octave,s) # Différence de gaussienne
- # question2_2(image,nb_octave,s) # Compteurs du nombre de points clés (avant orientation)
- # question2_3and4(image, nb_octave, s) # Evolution nombre points cles Sauvegarde points clés
- # question2_5(image,nb_octave,s) # tracé des points clés
-
-
- # question2_6(image_name,2) # sauvegarde des descripteurs (1 pour gauche et 2 pour droite)
-
-
- # pointsCles1=np.load("Descripteurs1.npy")
- # pointsCles2=np.load("Descripteurs2.npy")
- # question3_1(pointsCles1,pointsCles2)
+ pointsCles1=np.load("Descripteurs1.npy")
+ pointsCles2=np.load("Descripteurs2.npy")
+ #question3_1(pointsCles1,pointsCles2)
 
  plt.show()
-
+ pass
 
 
 if __name__=="__main__":

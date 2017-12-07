@@ -75,6 +75,7 @@ def reconstruct_image(h, image1, image2):
     for i in range(0, xmax):
         for j in range(0, ymax):
             i_init, j_init = np.array(np.dot(h, [i, j, 1])[0:2], dtype='int')
+            #si on sort de l'image de départ
             if i_init >= x2 or i_init < 0 or j_init >= y2 or j_init < 0:
                 pass
             else:
@@ -100,7 +101,7 @@ def correction_histogramme(image1, image2):
     return image2
 
 
-#fonction vérifiant qu'il n'y a pas de descripteurs trop proches les uns des autres dans les descripteurs les plus proches les uns des autres.
+#fonction vérifiant qu'il n'y a pas de descripteurs d'une image trop proches les uns des autres dans les descripteurs les plus proches les uns des autres.
 def check_for_superposed_descriptors(desc1, desc2):
 
     for i in range(desc1.shape[0]-1):

@@ -14,11 +14,6 @@ import matchingPoints
 
 
 
-def castToGrayScale(image):
-    image_gray = np.zeros(image.shape[0:2])
-    image_gray[:] = 0.2989 * image[:, :, 0] + 0.5870 * image[:, :, 1] + 0.1140 * image[:, :, 2]
-    return image_gray
-
 
 # full pipeline
 def getDescriptors(image_name):
@@ -26,17 +21,18 @@ def getDescriptors(image_name):
     t1=time.time()
     #On réalise les calculs sur le canal rouge de l'image
     image_initiale = mpimg.imread(image_name)[:, :, 1]
-    image=image_initiale/255
+    image = image_initiale/255
 
     nb_octave = 4
     s=3
-    # Plot la différence de gaussienne
+
     print("Différence de Gaussiennes")
     DoG_list, sigma_list = differenceDeGaussiennes(image, s, nb_octave)
 
+
+    #extrema / points clés
     r_courb_principale=10
     seuil_contraste=0.03
-
     extrema_final_list = []
     for octave in range(nb_octave):
         print("Detection des points-clés dans l'octave " + str(octave))
@@ -47,6 +43,8 @@ def getDescriptors(image_name):
         t2 = time.time() - t
         print("Calcul effectué en {0:.2f} secondes".format(t2))
 
+
+    #descripteurs
     n_zone = 4  # Donc 4x4 zones
     n_pixel_zone = 4  # Donc 4x4 pixel par zone
     n_bins = 8
@@ -63,6 +61,7 @@ def getDescriptors(image_name):
             L_grady_region, L_gradx_region = rotationGradient(point_cle, L_list, 16)
             descripteur = descripteurPointCle(point_cle, L_list, sigma_list, L_grady_region, L_gradx_region, n_pixel_zone,
                                           n_zone, n_bins)
+            #on remet les coordonnées du descripteur à l'échelle de l'image de base
             descripteur[0:2] = descripteur[0:2]*(2**octave)
             descripteurs_list = np.vstack((descripteurs_list, descripteur))
         final_descriptor_list = np.vstack((final_descriptor_list, descripteurs_list))
@@ -73,7 +72,7 @@ if __name__ == "__main__":
     image1 = "Redgauche.jpg"
     image2 = "Reddroite.jpg"
 
-    # à utiliser si on a déjà les descripteurs
+    # à utiliser (True) si on a déjà les descripteurs
     loadDesc = True
 
     d1 = None
@@ -92,6 +91,7 @@ if __name__ == "__main__":
     else:
         d1 = getDescriptors(image1)
         d2 = getDescriptors(image2)
+        print("Saving descriptors on disk for next time !")
         np.savetxt('desc_' + image1 + '.txt', d1)
         np.savetxt('desc_' + image2 + '.txt', d2)
     print('Entering final pipeline...')

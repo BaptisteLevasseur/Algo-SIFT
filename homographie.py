@@ -3,7 +3,7 @@ from timeDecorator import timeit
 
 
 
-
+#construit la matrice A
 def constructionA(points1, points2):
     n = points1.shape[0]
     A = np.zeros((2*n,9))

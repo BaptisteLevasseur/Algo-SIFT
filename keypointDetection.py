@@ -16,6 +16,7 @@ def detectionExtrema(DoG):
                 # Si le maximum au centre des 24 pixels
                 maxi = False
                 mini = False
+                #optimisation du calcul des extrema (plutôt qu'un appel à argmin et argmax)
                 cube = DoG[y - 1:y + 2, x - 1:x + 2, s - 1:s + 2]
                 zz = 1
                 ww = 1
@@ -75,14 +76,14 @@ def detectionExtrema(DoG):
                         cube[zz + 1, ww + 1, qq] < mid and
                         cube[zz + 1, ww + 1, qq + 1] < mid)
 
-                if maxi or mini: # or maxi (sur une image grayscale de détection de contour, les bords sont en noir => minimums)
+                if maxi or mini:
                     extrema_list = np.vstack((extrema_list, [y, x, s]))
 
     print(np.size(extrema_list,0))
     return extrema_list
 
+# retire les extrema de trop faible contraste
 def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
-    # Il faudra rajouter l'interpolation (je connais pas la théorie sur les dérivées vectorielles)
     list_size = np.size(extrema_list, 0)
     contraste = np.ones(list_size, dtype=bool)
 
@@ -133,6 +134,7 @@ def detectionContraste(DoG,extrema_list,seuil_contraste,D_grad,D_H):
     print(np.size(extrema_contraste_list, 0))
     return extrema_contraste_list
 
+#retire les extrema situés sur des arêtes
 def detectionEdges(DoG,r,extrema_list):
     list_size = np.size(extrema_list, 0)
     bord = np.ones(list_size, dtype=bool)
@@ -152,6 +154,7 @@ def detectionEdges(DoG,r,extrema_list):
     print(np.size(extrema_bords_list, 0))
     return extrema_bords_list
 
+#compte le nombre le points clés avant et après chaque étape d'afinage
 def compteurExtrema(DoG_list,no_octave,r,seuil_contraste):
     DoG=DoG_list[no_octave]
     D_grad=gradient(DoG)
@@ -170,8 +173,8 @@ def compteurExtrema(DoG_list,no_octave,r,seuil_contraste):
     return n_extrema, n_faible_contraste, n_points_arrete, n_points_bords
 
 
-#a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans soucie
-#le descriptorSize décrit le "rayon" du descripteur (usuellement 8 ou 16 pixels)
+#a pour but de supprimer les points clés trop près du bord pour pouvoir ensuite calculer sans souci le descripteur
+# descriptorSize décrit le "rayon" du descripteur (usuellement 8 ou 16 pixels)
 def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
     l =  np.empty((0, 3), int)
 
@@ -188,8 +191,9 @@ def suppressionBordsImage(extrema, xSize, ySize, descriptorSize):
 #2.2 Détection des points clés
 #on note qu'on utilise pas sigma
 def detectionPointsCles(DoG, sigma, seuil_contraste, r_courb_principale, resolution_octave):
-    # Pourquoi a t-on besoin de sigma? Bonne question
+    # Pourquoi a t-on besoin de sigma?
 
+    #ne fonctionne pas toujours
     #D_grad=gradient(DoG)
     #D_H = hessienne(DoG)
 

@@ -144,9 +144,9 @@ def question2_5(image, nb_octave, s):
    ax.add_line(line)
  plt.draw()
 
-def question2_6(image_name):
+def question2_6(image_name,numero):
  descripteurs=getDescriptors(image_name)
- np.save("Descripteurs",descripteurs)
+ np.save("Descripteurs"+str(numero),descripteurs)
 
 def question3_1(points_image1, points_image2):
  plt.figure(6)
@@ -173,7 +173,13 @@ def main():
  # question2_2(image,nb_octave,s) # Compteurs du nombre de points clés (avant orientation)
  # question2_3and4(image, nb_octave, s) # Evolution nombre points cles Sauvegarde points clés
  # question2_5(image,nb_octave,s) # tracé des points clés
- question2_6(image_name) # sauvegarde des descripteurs
+
+
+ # question2_6(image_name,2) # sauvegarde des descripteurs (1 pour gauche et 2 pour droite)
+
+
+ # pointsCles1=np.load("Descripteurs1.npy")
+ # pointsCles2=np.load("Descripteurs2.npy")
  # question3_1(pointsCles1,pointsCles2)
 
  plt.show()
